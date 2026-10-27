@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendInviteEmail } from "@/lib/email/send-invite";
 import type { UserRole } from "@/types/database";
 
 export async function inviteTeamMember(
@@ -17,13 +18,19 @@ export async function inviteTeamMember(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("organisation_id, role")
+    .select("organisation_id, role, full_name")
     .eq("id", user.id)
     .single();
   if (!profile) return { error: "Profile not found" };
   if (profile.role !== "owner" && profile.role !== "admin") {
     return { error: "Insufficient permissions" };
   }
+
+  const { data: org } = await supabase
+    .from("organisations")
+    .select("name")
+    .eq("id", profile.organisation_id)
+    .single();
 
   // Check for existing active invitation
   const { data: existing } = await supabase
@@ -49,6 +56,18 @@ export async function inviteTeamMember(
     .single();
 
   if (error) return { error: error.message };
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const inviteUrl = `${appUrl}/invite/${inv.token}`;
+
+  const emailResult = await sendInviteEmail({
+    toEmail: email.toLowerCase(),
+    inviteUrl,
+    orgName: org?.name ?? "your organisation",
+    inviterName: profile.full_name,
+  });
+
+  if (emailResult.error) return { error: `Invitation created but email failed: ${emailResult.error}` };
 
   revalidatePath("/settings");
   return { token: inv.token };

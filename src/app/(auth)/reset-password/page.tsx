@@ -1,6 +1,5 @@
 "use client";
 
-export const instant = false;
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

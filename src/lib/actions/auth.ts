@@ -105,6 +105,13 @@ export async function updatePassword(
   return {};
 }
 
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  const { redirect } = await import("next/navigation");
+  redirect("/login");
+}
+
 export async function sendPasswordReset(
   email: string,
   redirectOrigin: string

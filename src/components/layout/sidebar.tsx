@@ -7,7 +7,6 @@ import {
   Flag,
   Folder,
   FileText,
-  Layers,
   Settings,
 } from "@/components/ui/icons";
 
@@ -16,7 +15,6 @@ const navItems = [
   { href: "/suspicions", label: "Suspicions", icon: Flag },
   { href: "/cases", label: "Cases", icon: Folder },
   { href: "/reports", label: "Reports", icon: FileText },
-  { href: "/templates", label: "Templates", icon: Layers },
 ];
 
 export function Sidebar() {

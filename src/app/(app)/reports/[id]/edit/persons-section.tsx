@@ -692,13 +692,10 @@ function SubRecords({
               ]}
               small
             />
-            <Field
-              label="Country"
-              value={addrCountry}
-              onChange={setAddrCountry}
-              placeholder="e.g. NZ"
-              small
-            />
+            <div>
+              <label className="block text-[11px] font-medium text-text-secondary mb-1">Country</label>
+              <CountrySelect value={addrCountry} onChange={setAddrCountry} placeholder="Search country..." />
+            </div>
           </div>
           <Field
             label="Address"
@@ -834,13 +831,10 @@ function SubRecords({
               placeholder="e.g. DIA"
               small
             />
-            <Field
-              label="Issue Country"
-              value={idCountry}
-              onChange={setIdCountry}
-              placeholder="e.g. NZ"
-              small
-            />
+            <div>
+              <label className="block text-[11px] font-medium text-text-secondary mb-1">Issue Country</label>
+              <CountrySelect value={idCountry} onChange={setIdCountry} placeholder="Search country..." />
+            </div>
           </div>
           {idError && (
             <p className="text-[11.5px] text-red">{idError}</p>

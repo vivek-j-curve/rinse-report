@@ -18,7 +18,8 @@ export async function searchCases(query: string): Promise<SearchResult[]> {
   if (!query || query.trim().length < 2) return [];
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("search_cases", {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("search_cases", {
     p_query: query.trim(),
     p_limit: 12,
   });
@@ -28,5 +29,5 @@ export async function searchCases(query: string): Promise<SearchResult[]> {
     return [];
   }
 
-  return (data as SearchResult[]) ?? [];
+  return (data as unknown as SearchResult[]) ?? [];
 }

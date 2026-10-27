@@ -1,5 +1,7 @@
 "use client";
 
+export const instant = false;
+
 import { useState } from "react";
 import Link from "next/link";
 import { sendPasswordReset } from "@/lib/actions/auth";

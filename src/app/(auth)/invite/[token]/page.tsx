@@ -1,5 +1,7 @@
 "use client";
 
+export const instant = false;
+
 import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

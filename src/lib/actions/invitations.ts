@@ -149,10 +149,8 @@ export async function acceptInvitation(data: {
   });
   if (signInError) return { error: signInError.message };
 
-  const authed = await createClient();
-
-  // Upsert profile — trigger may have already created it from metadata; upsert is safe either way
-  const { error: profileError } = await authed.from("profiles").upsert({
+  // Upsert profile via admin client — bypasses RLS; trigger may have already created it
+  const { error: profileError } = await admin.from("profiles").upsert({
     id: authData.user.id,
     organisation_id: inv.organisation_id,
     full_name: data.full_name,

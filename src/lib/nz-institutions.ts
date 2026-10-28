@@ -15,9 +15,9 @@ export const NZ_INSTITUTIONS: NZInstitution[] = [
   { name: "ASB Bank Limited",                      codeType: "swift", code: "ASBBNZ2A", swiftCode: "ASBBNZ2A" },
   { name: "TSB Bank Limited",                      codeType: "swift", code: "TSBANZ22", swiftCode: "TSBANZ22" },
   { name: "Kiwibank Limited",                      codeType: "swift", code: "KIWINZ22", swiftCode: "KIWINZ22" },
-  { name: "Heartland Bank Limited",                codeType: "nz_bank_prefix", code: "31" },
+  { name: "Heartland Bank Limited",                codeType: "swift", code: "HEATNZ22", swiftCode: "HEATNZ22" },
   { name: "The Co-operative Bank Limited",         codeType: "nz_bank_prefix", code: "07" },
-  { name: "SBS Bank (Southland Building Society)", codeType: "nz_bank_prefix", code: "03" },
+  { name: "SBS Bank (Southland Building Society)", codeType: "swift", code: "SBSYNZ22", swiftCode: "SBSYNZ22" },
 
   // ── International banks operating in NZ ──────────────────────────────────
   { name: "Rabobank New Zealand Limited",          codeType: "swift", code: "RABONZ22", swiftCode: "RABONZ22" },
@@ -25,6 +25,8 @@ export const NZ_INSTITUTIONS: NZInstitution[] = [
   { name: "HSBC New Zealand Limited",              codeType: "swift", code: "HKBANZ2A", swiftCode: "HKBANZ2A" },
   { name: "Industrial and Commercial Bank of China (NZ) Limited", codeType: "swift", code: "ICBKNZ2A", swiftCode: "ICBKNZ2A" },
   { name: "Bank of China (New Zealand) Limited",   codeType: "swift", code: "BKCHNZ22", swiftCode: "BKCHNZ22" },
+  { name: "Bank of India (New Zealand) Limited",   codeType: "swift", code: "BKIDNZ2A", swiftCode: "BKIDNZ2A" },
+  { name: "Bank of Baroda (New Zealand) Limited",  codeType: "swift", code: "BARBNZ2A", swiftCode: "BARBNZ2A" },
   { name: "Citibank N.A. New Zealand Branch",      codeType: "swift", code: "CITINZ2X", swiftCode: "CITINZ2X" },
   { name: "JPMorgan Chase Bank N.A. New Zealand Branch",          codeType: "swift", code: "CHASNZ2X", swiftCode: "CHASNZ2X" },
   { name: "Deutsche Bank AG New Zealand Branch",   codeType: "swift", code: "DEUTNZAA", swiftCode: "DEUTNZAA" },

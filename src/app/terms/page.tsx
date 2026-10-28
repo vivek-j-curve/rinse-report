@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const EFFECTIVE_DATE = "28 October 2026";
-const CONTACT_EMAIL = "admin@rinsereport.com";
+const CONTACT_EMAIL = "vivek@jcurve.co.nz";
 const MONTHLY_FEE = "$200 NZD";
 
 export default function TermsPage() {

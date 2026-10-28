@@ -43,7 +43,7 @@ export default function TermsPage() {
           <Section title="1. Definitions">
             <p>In these Terms and Conditions:</p>
             <ul>
-              <li><strong>&ldquo;Rinse Report&rdquo;</strong>, <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>, or <strong>&ldquo;our&rdquo;</strong> refers to the operator of the Rinse Report platform.</li>
+              <li><strong>&ldquo;Rinse Report&rdquo;</strong>, <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>, or <strong>&ldquo;our&rdquo;</strong> refers to <strong>J Curve Limited</strong>, a New Zealand company, the operator of the Rinse Report platform.</li>
               <li><strong>&ldquo;Platform&rdquo;</strong> means the Rinse Report software-as-a-service application accessible at app.rinsereport.com.</li>
               <li><strong>&ldquo;Subscriber&rdquo;</strong>, <strong>&ldquo;you&rdquo;</strong>, or <strong>&ldquo;your&rdquo;</strong> means the organisation or individual who has registered for a Rinse Report account.</li>
               <li><strong>&ldquo;Reporting Entity&rdquo;</strong> means a reporting entity as defined under the Anti-Money Laundering and Countering Financing of Terrorism Act 2009 (AML/CFT Act).</li>

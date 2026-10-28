@@ -37,9 +37,10 @@ export default function PrivacyPage() {
         <div className="prose-legal">
           <Section title="1. Who we are">
             <p>
-              Rinse Report (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is a software service that helps New
-              Zealand reporting entities manage Anti-Money Laundering and Countering Financing of Terrorism (AML/CFT) filings
-              with the New Zealand Police Financial Intelligence Unit (FIU).
+              Rinse Report is a software service operated by <strong>J Curve Limited</strong>, a New Zealand company
+              (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;). Rinse Report helps New Zealand reporting entities manage
+              Anti-Money Laundering and Countering Financing of Terrorism (AML/CFT) filings with the New Zealand Police
+              Financial Intelligence Unit (FIU).
             </p>
             <p>
               We are bound by the New Zealand <strong>Privacy Act 2020</strong> and the Information Privacy Principles (IPPs)

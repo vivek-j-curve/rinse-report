@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { createNotificationsForOrg } from "@/lib/actions/notifications";
 import type { SuspicionStatus, CasePriority } from "@/types/database";
 
 export async function createCase(formData: {
@@ -64,6 +65,23 @@ export async function createCase(formData: {
 
   revalidatePath("/dashboard");
   revalidatePath("/suspicions");
+
+  // Notify admins/owners about the new case (fire-and-forget)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.rinsereport.com";
+  createNotificationsForOrg({
+    organisationId: profile.organisation_id,
+    excludeUserId: user.id,
+    type: "new_suspicion",
+    title: `New case: ${formData.title}`,
+    body: formData.description.slice(0, 120),
+    resourceId: caseRow.id,
+    resourceType: "case",
+    sendEmail: true,
+    emailSubject: `New case opened: ${formData.title}`,
+    emailBody: `A new suspicion case has been opened: <strong>${formData.title}</strong>.<br><br>${formData.description.slice(0, 200)}`,
+    actionUrl: `${appUrl}/suspicions/${caseRow.id}`,
+  }).catch(() => {});
+
   return { data: caseRow };
 }
 

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, Search, ChevronDown, LogOut } from "@/components/ui/icons";
+import { Search, ChevronDown, LogOut } from "@/components/ui/icons";
 import { CommandPalette } from "@/components/search/command-palette";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationPanel } from "@/components/layout/notification-panel";
 import { signOut } from "@/lib/actions/auth";
 import type { Profile } from "@/types/database";
 
@@ -18,9 +19,10 @@ function initials(name: string) {
 
 interface TopbarProps {
   profile: Profile;
+  unreadCount: number;
 }
 
-export function Topbar({ profile }: TopbarProps) {
+export function Topbar({ profile, unreadCount }: TopbarProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,10 +72,7 @@ export function Topbar({ profile }: TopbarProps) {
 
         <ThemeToggle />
 
-        <button className="relative w-[34px] h-[34px] flex items-center justify-center rounded-md text-text-secondary hover:bg-sidebar-hover transition-colors">
-          <Bell size={18} />
-          <span className="absolute top-[7px] right-[7px] w-[7px] h-[7px] bg-red rounded-full border-2 border-surface" />
-        </button>
+        <NotificationPanel initialCount={unreadCount} />
 
         <div ref={menuRef} className="relative">
           <button

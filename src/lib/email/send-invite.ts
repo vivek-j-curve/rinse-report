@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendInviteEmail({
   toEmail,
   inviteUrl,
@@ -13,6 +11,7 @@ export async function sendInviteEmail({
   orgName: string;
   inviterName: string;
 }): Promise<{ error?: string }> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.emails.send({
     from: "Rinse Report <admin@rinsereport.com>",
     to: toEmail,

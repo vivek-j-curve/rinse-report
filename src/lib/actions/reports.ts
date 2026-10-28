@@ -6,6 +6,7 @@ import type { ReportData } from "@/lib/goaml";
 import { buildReportPdf } from "@/lib/pdf/report-pdf";
 import type { PdfReportData } from "@/lib/pdf/report-pdf";
 import { revalidatePath } from "next/cache";
+import { createNotificationsForOrg } from "@/lib/actions/notifications";
 
 // ── helpers ──
 
@@ -1602,6 +1603,25 @@ export async function generateReport(caseId: string) {
   revalidatePath("/reports");
   revalidatePath(`/suspicions/${caseId}`);
 
+  // Notify: report is ready for review
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.rinsereport.com";
+  const notifyUsers: string[] = [];
+  if (caseRecord.assigned_to) notifyUsers.push(caseRecord.assigned_to);
+  createNotificationsForOrg({
+    organisationId: profile.organisation_id,
+    excludeUserId: ctx.user.id,
+    targetUserIds: notifyUsers.length > 0 ? undefined : undefined,
+    type: "report_ready",
+    title: `Report ready: ${caseRecord.title}`,
+    body: "A new AML report has been generated and is ready for review.",
+    resourceId: newReport.id,
+    resourceType: "report",
+    sendEmail: true,
+    emailSubject: `Report ready for review: ${caseRecord.title}`,
+    emailBody: `A new AML report has been generated for case <strong>${caseRecord.title}</strong> and is ready for your review.`,
+    actionUrl: `${appUrl}/reports/${newReport.id}`,
+  }).catch(() => {});
+
   return {
     success: true,
     report_id: newReport.id,
@@ -1713,6 +1733,23 @@ export async function confirmReportSubmission(
   revalidatePath("/reports");
   revalidatePath(`/reports/${reportId}`);
   revalidatePath("/dashboard");
+
+  // Notify: report has been filed
+  const appUrl2 = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.rinsereport.com";
+  createNotificationsForOrg({
+    organisationId: profile.organisation_id,
+    excludeUserId: user.id,
+    type: "report_filed",
+    title: "Report filed with the FIU",
+    body: "A report has been confirmed as submitted to the Financial Intelligence Unit.",
+    resourceId: reportId,
+    resourceType: "report",
+    sendEmail: true,
+    emailSubject: "Report filed with the FIU",
+    emailBody: "A report has been confirmed as submitted to the Financial Intelligence Unit. You can view it in Rinse Report.",
+    actionUrl: `${appUrl2}/reports/${reportId}`,
+  }).catch(() => {});
+
   return { success: true };
 }
 

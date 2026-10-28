@@ -1,5 +1,7 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Shield,
   CheckCircle,
@@ -11,12 +13,7 @@ import {
   ArrowRight,
   Flag,
 } from "@/components/ui/icons";
-
-export const metadata = {
-  title: "Rinse Report: AML/CFT Filing for New Zealand",
-  description:
-    "Guided suspicious activity reporting with goAML XML generation and SLA tracking for New Zealand reporting entities. Start at $200 NZD/month.",
-};
+import { BookCallModal } from "@/components/book-call-modal";
 
 const features = [
   {
@@ -91,8 +88,11 @@ const trustSignals = [
 ];
 
 export default function LandingPage() {
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {showModal && <BookCallModal onClose={() => setShowModal(false)} />}
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -146,30 +146,16 @@ export default function LandingPage() {
               Start filing properly
               <ArrowRight size={15} />
             </Link>
-            <Link
-              href="/login"
+            <button
+              onClick={() => setShowModal(true)}
               className="text-[14px] font-medium text-text-secondary hover:text-foreground transition-colors px-5 py-2.5"
             >
-              Sign in to your account
-            </Link>
+              Book a call
+            </button>
           </div>
           <p className="text-text-tertiary text-[12px] mt-4">
             $200 NZD per reporting entity per month. No setup fee.
           </p>
-        </section>
-
-        {/* Hero screenshot */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
-          <div className="rounded-2xl overflow-hidden border border-border shadow-2xl">
-            <Image
-              src="/screenshot-kanban.png"
-              alt="Rinse Report suspicion kanban board showing cases at each stage of the filing workflow"
-              width={1280}
-              height={800}
-              className="w-full h-auto block"
-              priority
-            />
-          </div>
         </section>
 
         {/* Trust signals */}
@@ -234,27 +220,6 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* Questionnaire screenshot */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
-          <div className="text-center mb-8">
-            <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">
-              Plain questions. Not XML fields.
-            </h2>
-            <p className="text-text-secondary text-[14px] max-w-md mx-auto">
-              Staff answer in plain language. Rinse Report maps every answer to the correct field behind the scenes.
-            </p>
-          </div>
-          <div className="rounded-2xl overflow-hidden border border-border shadow-2xl">
-            <Image
-              src="/screenshot-questionnaire.png"
-              alt="Rinse Report guided suspicion intake questionnaire showing step-by-step branching questions"
-              width={1280}
-              height={800}
-              className="w-full h-auto block"
-            />
           </div>
         </section>
 
@@ -353,15 +318,23 @@ export default function LandingPage() {
             Ready to file with confidence?
           </h2>
           <p className="text-text-secondary text-[15px] mb-8 max-w-sm mx-auto">
-            Set up your organisation and first reporting entity in minutes.
+            Set up your organisation and first reporting entity in minutes, or talk to us first.
           </p>
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-medium text-[14px] px-6 py-3 rounded-lg transition-colors"
-          >
-            Start filing properly
-            <ArrowRight size={15} />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-medium text-[14px] px-6 py-3 rounded-lg transition-colors"
+            >
+              Start filing properly
+              <ArrowRight size={15} />
+            </Link>
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-[14px] font-medium text-text-secondary hover:text-foreground transition-colors px-6 py-3"
+            >
+              Book a call
+            </button>
+          </div>
         </section>
       </main>
 

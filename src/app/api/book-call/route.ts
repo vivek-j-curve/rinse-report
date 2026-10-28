@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   }
 
   const { error } = await resend.emails.send({
-    from: "Rinse Report <noreply@rinsereport.com>",
+    from: "Rinse Report <admin@rinsereport.com>",
     to: "vivek@jcurve.co.nz",
     subject: `New call request: ${name} — ${company}`,
     html: `

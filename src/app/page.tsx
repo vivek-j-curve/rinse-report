@@ -21,12 +21,12 @@ const features = [
   {
     icon: FileText,
     title: "Answer questions. Get a compliant report.",
-    body: "A branching questionnaire leads compliance staff through STR, SAR, LCT, and IFT intake. No XML field names. No goAML UI. Just plain-language questions that map to the schema behind the scenes.",
+    body: "A branching questionnaire leads compliance staff through STR and SAR intake. No XML field names. No goAML UI. Just plain-language questions that map to the correct fields behind the scenes.",
   },
   {
     icon: CheckCircle,
     title: "goAML XML, ready to upload to the FIU portal.",
-    body: "Every answer maps to the goAML v5.0.2 schema automatically. When you're ready to file, download a valid XML file and upload it directly to the FIU portal. No manual schema work.",
+    body: "Every answer maps to the correct fields automatically. When you're ready to file, download a valid XML file and upload it directly to the FIU portal. No manual schema work.",
   },
   {
     icon: Clock,
@@ -35,8 +35,8 @@ const features = [
   },
   {
     icon: LayoutGrid,
-    title: "Track every case from suspicion raised to filed.",
-    body: "A kanban board takes each case through Suspicion Raised, Investigating, To File with FIU, Filed, and Resolved. Assign owners, add internal notes, and set deadlines at every stage.",
+    title: "Nothing gets lost. Every case, tracked end to end.",
+    body: "From the moment a suspicion is raised to the day it's filed with the FIU, every case has an owner, a status, and a full activity timeline. No more chasing colleagues for updates or losing context between staff.",
   },
   {
     icon: Lock,
@@ -82,8 +82,7 @@ const problems = [
 ];
 
 const trustSignals = [
-  "goAML XML schema v5.0.2",
-  "STR, SAR, LCT, IFT",
+  "STR and SAR reports",
   "5-business-day SLA tracking",
   "NZ public holidays included",
   "MFA enforced for all users",
@@ -154,7 +153,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="text-text-tertiary text-[12px] mt-4">
-            $200 NZD per reporting entity per month. 14-day free trial. No setup fee.
+            $200 NZD per reporting entity per month. No setup fee.
           </p>
         </section>
 
@@ -264,7 +263,7 @@ export default function LandingPage() {
               <ul className="text-left space-y-3 mb-8">
                 {[
                   "Unlimited users per organisation",
-                  "All report types (STR, SAR, LCT, IFT)",
+                  "STR and SAR report types",
                   "goAML XML generation",
                   "SLA tracking and notifications",
                   "Case management and audit trail",
@@ -284,7 +283,7 @@ export default function LandingPage() {
                 Start filing properly
               </Link>
               <p className="text-text-tertiary text-[12px] mt-4">
-                14-day free trial. Cancel anytime.
+                Cancel anytime.
               </p>
             </div>
           </div>

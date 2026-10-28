@@ -12,6 +12,8 @@ const AUTH_PREFIXES = [
   "/auth",
 ];
 
+const PUBLIC_PATHS = ["/"];
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -42,8 +44,9 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = AUTH_PREFIXES.some((p) => pathname.startsWith(p));
+  const isPublicPath = PUBLIC_PATHS.includes(pathname);
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isAuthRoute && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

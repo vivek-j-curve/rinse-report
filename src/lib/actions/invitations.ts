@@ -74,6 +74,62 @@ export async function inviteTeamMember(
   return { token: inv.token };
 }
 
+export async function removeTeamMember(memberId: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const admin = createAdminClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("organisation_id, role")
+    .eq("id", user.id)
+    .single();
+  if (!profile) return { error: "Profile not found" };
+  if (profile.role !== "owner" && profile.role !== "admin") {
+    return { error: "Insufficient permissions" };
+  }
+
+  if (memberId === user.id) return { error: "You cannot remove yourself" };
+
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("role, organisation_id")
+    .eq("id", memberId)
+    .single();
+  if (!target) return { error: "Member not found" };
+  if (target.organisation_id !== profile.organisation_id) {
+    return { error: "Member not in your organisation" };
+  }
+
+  // Permission matrix: owner removes admins/members; admin removes owners/members
+  const removable: Record<string, string[]> = {
+    owner: ["admin", "member", "read_only"],
+    admin: ["owner", "member", "read_only"],
+  };
+  if (!removable[profile.role]?.includes(target.role)) {
+    return { error: "You cannot remove this member" };
+  }
+
+  const { error: profileError } = await admin
+    .from("profiles")
+    .delete()
+    .eq("id", memberId)
+    .eq("organisation_id", profile.organisation_id);
+
+  if (profileError) return { error: profileError.message };
+
+  // Delete the auth user so they cannot log back in
+  const { error: authError } = await admin.auth.admin.deleteUser(memberId);
+  if (authError) return { error: authError.message };
+
+  revalidatePath("/settings");
+  return {};
+}
+
 export async function revokeInvitation(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
 

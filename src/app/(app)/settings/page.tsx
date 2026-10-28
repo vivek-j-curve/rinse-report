@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
 import { RevokeButton } from "./revoke-button";
+import { RemoveMemberButton } from "./remove-member-button";
 import { User, Shield, Clock } from "@/components/ui/icons";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -58,6 +59,19 @@ export default async function SettingsPage() {
   if (!profile) redirect("/login");
 
   const canManageTeam = profile.role === "owner" || profile.role === "admin";
+
+  const removable: Record<string, string[]> = {
+    owner: ["admin", "member", "read_only"],
+    admin: ["owner", "member", "read_only"],
+  };
+
+  const currentUserId = user.id;
+  const currentRole = profile.role;
+
+  function canRemoveMember(targetId: string, targetRole: string) {
+    if (targetId === currentUserId) return false;
+    return removable[currentRole]?.includes(targetRole) ?? false;
+  }
 
   const [membersResult, invitesResult] = await Promise.all([
     supabase
@@ -121,6 +135,9 @@ export default async function SettingsPage() {
                 </div>
               </div>
               <RoleBadge role={m.role} />
+              {canRemoveMember(m.id, m.role) && (
+                <RemoveMemberButton id={m.id} name={m.full_name ?? m.email ?? "this member"} />
+              )}
             </div>
           ))}
         </div>

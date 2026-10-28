@@ -127,23 +127,22 @@ export async function acceptInvitation(data: {
     return { error: "Email does not match invitation" };
   }
 
-  // Create Supabase auth user — pass org/role so the handle_new_user trigger succeeds
-  const { data: authData, error: signUpError } = await supabase.auth.signUp({
+  // Create user via admin API so email is pre-confirmed — user proved ownership by clicking the invite link
+  const { data: authData, error: signUpError } = await admin.auth.admin.createUser({
     email: data.email,
     password: data.password,
-    options: {
-      data: {
-        full_name: data.full_name,
-        organisation_id: inv.organisation_id,
-        role: inv.role,
-      },
+    email_confirm: true,
+    user_metadata: {
+      full_name: data.full_name,
+      organisation_id: inv.organisation_id,
+      role: inv.role,
     },
   });
 
   if (signUpError) return { error: signUpError.message };
   if (!authData.user) return { error: "Failed to create account" };
 
-  // Sign in
+  // Sign in now that the email is confirmed
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email: data.email,
     password: data.password,

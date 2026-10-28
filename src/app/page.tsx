@@ -129,7 +129,8 @@ export default function LandingPage() {
             For New Zealand reporting entities
           </div>
           <h1 className="font-serif text-5xl sm:text-6xl font-semibold leading-[1.1] mb-6 max-w-2xl mx-auto">
-            From suspicion to FIU filing
+            From suspicion to{" "}
+            <span className="whitespace-nowrap">FIU filing,</span>
             <br />
             <em>in under 30 minutes.</em>
           </h1>

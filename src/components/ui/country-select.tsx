@@ -24,6 +24,7 @@ export function CountrySelect({
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -53,7 +54,11 @@ export function CountrySelect({
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        ref.current && !ref.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setOpen(false);
         setSearch("");
       }
@@ -64,6 +69,7 @@ export function CountrySelect({
 
   const dropdown = open && mounted ? createPortal(
     <div
+      ref={dropdownRef}
       style={dropdownStyle}
       className="bg-surface border border-border rounded-lg shadow-lg overflow-hidden"
     >

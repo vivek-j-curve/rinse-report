@@ -97,12 +97,10 @@ export const STEPS: Step[] = [
         type: "radio",
         required: true,
         helper:
-          "STR (Suspicious Transaction Report) - unusual or suspicious transactions. LCT (Large Cash Transaction) - cash transactions above NZD 10,000. IFT (International Funds Transfer) - cross-border transfers. If you're unsure, STR is most common.",
+          "STR (Suspicious Transaction Report) - unusual or suspicious transactions. If you're unsure, STR is most common.",
         options: [
           { value: "STR", label: "STR - Suspicious Transaction Report", description: "Unusual or suspicious transactions" },
           { value: "SAR", label: "SAR - Suspicious Activity Report", description: "Suspicious behaviour or activity with no specific transaction" },
-          { value: "LCT", label: "LCT - Large Cash Transaction", description: "Cash transactions of NZD 10,000 or more" },
-          { value: "IFT", label: "IFT - International Funds Transfer", description: "Cross-border transfers (inbound or outbound)" },
         ],
       },
     ],

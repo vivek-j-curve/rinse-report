@@ -12,6 +12,7 @@ import {
   saveEntity,
 } from "@/lib/actions/reports";
 import { FundsTypeSelect } from "@/components/ui/funds-type-select";
+import { NZ_INSTITUTIONS, lookupInstitution } from "@/lib/nz-institutions";
 
 type AccountRecord = {
   id: string;
@@ -1082,13 +1083,25 @@ function PartySlot({
               <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
                 Bank / Institution *
               </label>
-              <input
-                type="text"
+              <select
                 value={accountForm.institution_name}
-                onChange={(e) => setAccountForm({ ...accountForm, institution_name: e.target.value })}
-                placeholder="e.g. ANZ Bank New Zealand"
-                className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
+                onChange={(e) => {
+                  const name = e.target.value;
+                  const inst = lookupInstitution(name);
+                  setAccountForm({
+                    ...accountForm,
+                    institution_name: name,
+                    institution_code_type: inst?.codeType ?? accountForm.institution_code_type,
+                    institution_code: inst?.code ?? (inst ? "" : accountForm.institution_code),
+                  });
+                }}
+                className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+              >
+                <option value="">Select institution...</option>
+                {NZ_INSTITUTIONS.map((inst) => (
+                  <option key={inst.name} value={inst.name}>{inst.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
@@ -1119,34 +1132,41 @@ function PartySlot({
                 className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
-                  Code Type
-                </label>
-                <select
-                  value={accountForm.institution_code_type}
-                  onChange={(e) => setAccountForm({ ...accountForm, institution_code_type: e.target.value })}
-                  className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  {INST_CODE_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
-                  Code
-                </label>
-                <input
-                  type="text"
-                  value={accountForm.institution_code}
-                  onChange={(e) => setAccountForm({ ...accountForm, institution_code: e.target.value })}
-                  placeholder="e.g. ANZBNZ22"
-                  className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 font-mono"
-                />
-              </div>
-            </div>
+            {(() => {
+              const autoFilled = !!(accountForm.institution_name && lookupInstitution(accountForm.institution_name)?.code);
+              return (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
+                      Code Type
+                      {autoFilled && <span className="ml-1 text-text-tertiary font-normal">(auto-filled)</span>}
+                    </label>
+                    <select
+                      value={accountForm.institution_code_type}
+                      onChange={(e) => setAccountForm({ ...accountForm, institution_code_type: e.target.value })}
+                      className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    >
+                      {INST_CODE_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
+                      Code
+                      {autoFilled && <span className="ml-1 text-text-tertiary font-normal">(auto-filled)</span>}
+                    </label>
+                    <input
+                      type="text"
+                      value={accountForm.institution_code}
+                      onChange={(e) => setAccountForm({ ...accountForm, institution_code: e.target.value })}
+                      placeholder="e.g. ANZBNZ22"
+                      className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 font-mono"
+                    />
+                  </div>
+                </div>
+              );
+            })()}
             <div>
               <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
                 Currency

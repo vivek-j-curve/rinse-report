@@ -1,7 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, ExternalLink } from "@/components/ui/icons";
+import { COUNTRY_CODE_TO_NAME } from "@/components/ui/country-select";
+
+const ID_TYPE_LABELS: Record<string, string> = {
+  P: "Passport",
+  D: "Driver's Licence",
+  I: "National ID",
+  O: "Other",
+};
+
+function fmtCountry(code: string | undefined) {
+  if (!code) return undefined;
+  return COUNTRY_CODE_TO_NAME[code] ?? code;
+}
 
 type SuspicionData = {
   description: string;
@@ -98,6 +112,8 @@ export function SuspicionDrawer({
   questionnaireSubject: unknown;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   if (!caseData) return null;
 
   const answers = (questionnaireSubject ?? {}) as Answers;
@@ -124,11 +140,11 @@ export function SuspicionDrawer({
     return `${diff} day${diff !== 1 ? "s" : ""} left`;
   }
 
-  const idParts = [answers.id_type, answers.id_number, answers.id_country].filter(Boolean).join(" · ");
-  const addressParts = [answers.address, answers.city, answers.country].filter(Boolean).join(", ");
-  const entityAddressParts = [answers.entity_address, answers.entity_city, answers.entity_country].filter(Boolean).join(", ");
+  const idParts = [ID_TYPE_LABELS[answers.id_type as string] ?? answers.id_type, answers.id_number, fmtCountry(answers.id_country as string)].filter(Boolean).join(" · ");
+  const addressParts = [answers.address, answers.city, fmtCountry(answers.country as string)].filter(Boolean).join(", ");
+  const entityAddressParts = [answers.entity_address, answers.entity_city, fmtCountry(answers.entity_country as string)].filter(Boolean).join(", ");
 
-  return (
+  const drawer = (
     <div className="fixed bottom-0 right-4 z-50" style={{ width: 360 }}>
       {/* Expanded panel */}
       {open && (
@@ -195,6 +211,12 @@ export function SuspicionDrawer({
               )}
               {answers.narrative && (
                 <p className="text-[12.5px] leading-relaxed text-text whitespace-pre-wrap">{answers.narrative}</p>
+              )}
+              {answers.action_taken && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wide mb-1">Action Taken</p>
+                  <p className="text-[12.5px] leading-relaxed text-text whitespace-pre-wrap">{answers.action_taken}</p>
+                </div>
               )}
               {!parsed && !answers.narrative && (
                 <p className="text-[12px] text-text-tertiary">No description recorded.</p>
@@ -305,4 +327,6 @@ export function SuspicionDrawer({
       )}
     </div>
   );
+
+  return mounted ? createPortal(drawer, document.body) : null;
 }

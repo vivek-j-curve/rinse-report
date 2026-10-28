@@ -127,11 +127,17 @@ export async function acceptInvitation(data: {
     return { error: "Email does not match invitation" };
   }
 
-  // Create Supabase auth user
+  // Create Supabase auth user — pass org/role so the handle_new_user trigger succeeds
   const { data: authData, error: signUpError } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
-    options: { data: { full_name: data.full_name } },
+    options: {
+      data: {
+        full_name: data.full_name,
+        organisation_id: inv.organisation_id,
+        role: inv.role,
+      },
+    },
   });
 
   if (signUpError) return { error: signUpError.message };
@@ -146,12 +152,11 @@ export async function acceptInvitation(data: {
 
   const authed = await createClient();
 
-  // Create profile
-  const { error: profileError } = await authed.from("profiles").insert({
+  // Upsert profile — trigger may have already created it from metadata; upsert is safe either way
+  const { error: profileError } = await authed.from("profiles").upsert({
     id: authData.user.id,
     organisation_id: inv.organisation_id,
     full_name: data.full_name,
-    email: data.email.toLowerCase(),
     role: inv.role,
   });
 

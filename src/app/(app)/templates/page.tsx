@@ -28,20 +28,6 @@ export default function TemplatesPage() {
               "Report for suspicious activity that does not involve a specific transaction.",
             fields: 38,
           },
-          {
-            type: "LCT",
-            name: "Large Cash Transaction",
-            description:
-              "Mandatory report for cash transactions over $10,000 NZD or equivalent.",
-            fields: 28,
-          },
-          {
-            type: "IFT",
-            name: "International Funds Transfer",
-            description:
-              "Report for international wire transfers meeting reporting thresholds.",
-            fields: 35,
-          },
         ].map((template) => (
           <div
             key={template.type}

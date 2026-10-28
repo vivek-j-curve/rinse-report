@@ -69,8 +69,6 @@ export function GenerateReportButton({
                 className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
               >
                 <option value="STR">STR - Suspicious Transaction Report</option>
-                <option value="LCT">LCT - Large Cash Transaction</option>
-                <option value="IFT">IFT - International Funds Transfer</option>
               </select>
               <p className="text-[11px] text-text-tertiary mt-1">SAR is for activity suspicions only - the type is set when raising the suspicion.</p>
             </>

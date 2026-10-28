@@ -191,12 +191,10 @@ export function CreateReportModal({ cases }: { cases: CaseOption[] }) {
                   }
                   return (
                     <>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 gap-2">
                         {(
                           [
                             { value: "STR", label: "STR", desc: "Suspicious Transaction" },
-                            { value: "LCT", label: "LCT", desc: "Large Cash Transaction" },
-                            { value: "IFT", label: "IFT", desc: "Intl Funds Transfer" },
                           ] as const
                         ).map((t) => (
                           <button

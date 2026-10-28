@@ -2,30 +2,32 @@ export type NZInstitution = {
   name: string;
   codeType: "nz_bank_prefix" | "swift" | null;
   code: string;
+  swiftCode?: string; // SWIFT/BIC for display when primary code is nz_bank_prefix
 };
 
-// NZ registered banks — prefix codes from RBNZ bank account number scheme (first 2 digits)
-// SWIFT codes from published BIC directories
+// NZ registered banks — SWIFT codes confirmed via SWIFT BIC directory (wise.com)
+// NZ bank prefix = first 2 digits of NZ account number (RBNZ scheme)
 export const NZ_INSTITUTIONS: NZInstitution[] = [
-  // ── Major NZ trading banks (NZ bank prefix) ──────────────────────────────
-  { name: "ANZ Bank New Zealand Limited",          codeType: "nz_bank_prefix", code: "01" },
-  { name: "Bank of New Zealand (BNZ)",             codeType: "nz_bank_prefix", code: "02" },
-  { name: "Westpac New Zealand Limited",           codeType: "nz_bank_prefix", code: "03" },
-  { name: "ASB Bank Limited",                      codeType: "nz_bank_prefix", code: "12" },
-  { name: "TSB Bank Limited",                      codeType: "nz_bank_prefix", code: "15" },
-  { name: "Kiwibank Limited",                      codeType: "nz_bank_prefix", code: "38" },
+  // ── Major NZ trading banks ────────────────────────────────────────────────
+  { name: "ANZ Bank New Zealand Limited",          codeType: "swift", code: "ANZBNZ22", swiftCode: "ANZBNZ22" },
+  { name: "Bank of New Zealand (BNZ)",             codeType: "swift", code: "BKNZNZ22", swiftCode: "BKNZNZ22" },
+  { name: "Westpac New Zealand Limited",           codeType: "swift", code: "WPACNZ2W", swiftCode: "WPACNZ2W" },
+  { name: "ASB Bank Limited",                      codeType: "swift", code: "ASBBNZ2A", swiftCode: "ASBBNZ2A" },
+  { name: "TSB Bank Limited",                      codeType: "swift", code: "TSBANZ22", swiftCode: "TSBANZ22" },
+  { name: "Kiwibank Limited",                      codeType: "swift", code: "KIWINZ22", swiftCode: "KIWINZ22" },
   { name: "Heartland Bank Limited",                codeType: "nz_bank_prefix", code: "31" },
   { name: "The Co-operative Bank Limited",         codeType: "nz_bank_prefix", code: "07" },
   { name: "SBS Bank (Southland Building Society)", codeType: "nz_bank_prefix", code: "03" },
 
-  // ── International banks operating in NZ (SWIFT) ──────────────────────────
-  { name: "HSBC New Zealand Limited",              codeType: "swift", code: "HKBANZ2A" },
-  { name: "Rabobank New Zealand Limited",          codeType: "swift", code: "RABONZ22" },
-  { name: "Bank of China (New Zealand) Limited",   codeType: "swift", code: "BKCHCNBJ" },
-  { name: "Industrial and Commercial Bank of China (NZ) Limited", codeType: "swift", code: "ICBKNZ2A" },
-  { name: "China Construction Bank (New Zealand) Limited",        codeType: "swift", code: "PCBCCNBJ" },
-  { name: "Citibank N.A. New Zealand Branch",      codeType: "swift", code: "CITINZ2X" },
-  { name: "JPMorgan Chase Bank N.A. New Zealand Branch",          codeType: "swift", code: "CHASUS33" },
+  // ── International banks operating in NZ ──────────────────────────────────
+  { name: "Rabobank New Zealand Limited",          codeType: "swift", code: "RABONZ22", swiftCode: "RABONZ22" },
+  { name: "China Construction Bank (New Zealand) Limited",        codeType: "swift", code: "PCBCNZ22", swiftCode: "PCBCNZ22" },
+  { name: "HSBC New Zealand Limited",              codeType: "swift", code: "HKBANZ2A", swiftCode: "HKBANZ2A" },
+  { name: "Industrial and Commercial Bank of China (NZ) Limited", codeType: "swift", code: "ICBKNZ2A", swiftCode: "ICBKNZ2A" },
+  { name: "Bank of China (New Zealand) Limited",   codeType: "swift", code: "BKCHNZ22", swiftCode: "BKCHNZ22" },
+  { name: "Citibank N.A. New Zealand Branch",      codeType: "swift", code: "CITINZ2X", swiftCode: "CITINZ2X" },
+  { name: "JPMorgan Chase Bank N.A. New Zealand Branch",          codeType: "swift", code: "CHASNZ2X", swiftCode: "CHASNZ2X" },
+  { name: "Deutsche Bank AG New Zealand Branch",   codeType: "swift", code: "DEUTNZAA", swiftCode: "DEUTNZAA" },
 
   // ── Non-bank deposit takers / financial institutions ─────────────────────
   { name: "Emerge Group Limited",                  codeType: null, code: "" },

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Shield,
   CheckCircle,
@@ -157,6 +158,20 @@ export default function LandingPage() {
           </p>
         </section>
 
+        {/* Hero screenshot */}
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
+          <div className="rounded-2xl overflow-hidden border border-border shadow-2xl">
+            <Image
+              src="/screenshot-kanban.png"
+              alt="Rinse Report suspicion kanban board showing cases at each stage of the filing workflow"
+              width={1280}
+              height={800}
+              className="w-full h-auto block"
+              priority
+            />
+          </div>
+        </section>
+
         {/* Trust signals */}
         <section className="border-y border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
@@ -219,6 +234,27 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Questionnaire screenshot */}
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
+          <div className="text-center mb-8">
+            <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">
+              Plain questions. Not XML fields.
+            </h2>
+            <p className="text-text-secondary text-[14px] max-w-md mx-auto">
+              Staff answer in plain language. Rinse Report maps every answer to the correct field behind the scenes.
+            </p>
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-border shadow-2xl">
+            <Image
+              src="/screenshot-questionnaire.png"
+              alt="Rinse Report guided suspicion intake questionnaire showing step-by-step branching questions"
+              width={1280}
+              height={800}
+              className="w-full h-auto block"
+            />
           </div>
         </section>
 

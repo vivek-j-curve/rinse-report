@@ -41,9 +41,12 @@ export async function sendInviteEmail({
         <!-- Body -->
         <tr><td style="padding:32px 40px;">
           <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#1a1a18;letter-spacing:-0.4px;">You've been invited</p>
-          <p style="margin:0 0 24px;font-size:15px;color:#6b6b67;line-height:1.6;">
+          <p style="margin:0 0 16px;font-size:15px;color:#6b6b67;line-height:1.6;">
             <strong style="color:#1a1a18;">${inviterName}</strong> has invited you to join
-            <strong style="color:#1a1a18;">${orgName}</strong> on Rinse Report — AML compliance and suspicious activity reporting.
+            <strong style="color:#1a1a18;">${orgName}</strong> on Rinse Report.
+          </p>
+          <p style="margin:0 0 24px;font-size:14px;color:#6b6b67;line-height:1.7;background:#f5f5f0;padding:14px 18px;border-radius:8px;">
+            Rinse Report helps compliance teams identify suspicious activity, manage cases, and file AML reports with the FIU. Your team uses it to log suspicions, and write up STRs and SARs. It is also used to track investigations, and generate goAML-ready XML submissions.
           </p>
 
           <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">

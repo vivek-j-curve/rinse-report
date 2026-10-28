@@ -12,7 +12,7 @@ const AUTH_PREFIXES = [
   "/auth",
 ];
 
-const PUBLIC_PATHS = ["/"];
+const PUBLIC_PATHS = ["/", "/api/book-call"];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

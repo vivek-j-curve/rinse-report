@@ -6,20 +6,22 @@ import { redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
 import { RevokeButton } from "./revoke-button";
 import { RemoveMemberButton } from "./remove-member-button";
+import { ChangeRoleSelect } from "./change-role-select";
 import { User, Shield, Clock } from "@/components/ui/icons";
+import type { UserRole } from "@/types/database";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
   admin: "Admin",
-  member: "Member",
-  read_only: "Read-only",
+  analyst: "Analyst",
+  viewer: "Viewer",
 };
 
 const ROLE_COLORS: Record<string, string> = {
   owner: "bg-amber/10 text-amber border-amber/20",
   admin: "bg-accent/10 text-accent border-accent/20",
-  member: "bg-green/10 text-green border-green/20",
-  read_only: "bg-border text-text-secondary border-border",
+  analyst: "bg-green/10 text-green border-green/20",
+  viewer: "bg-border text-text-secondary border-border",
 };
 
 function RoleBadge({ role }: { role: string }) {
@@ -61,8 +63,13 @@ export default async function SettingsPage() {
   const canManageTeam = profile.role === "owner" || profile.role === "admin";
 
   const removable: Record<string, string[]> = {
-    owner: ["admin", "member", "read_only"],
-    admin: ["owner", "member", "read_only"],
+    owner: ["admin", "analyst", "viewer"],
+    admin: ["owner", "analyst", "viewer"],
+  };
+
+  const manageable: Record<string, string[]> = {
+    owner: ["admin", "analyst", "viewer"],
+    admin: ["admin", "analyst", "viewer"],
   };
 
   const currentUserId = user.id;
@@ -71,6 +78,11 @@ export default async function SettingsPage() {
   function canRemoveMember(targetId: string, targetRole: string) {
     if (targetId === currentUserId) return false;
     return removable[currentRole]?.includes(targetRole) ?? false;
+  }
+
+  function canChangeRole(targetId: string, targetRole: string) {
+    if (targetId === currentUserId) return false;
+    return manageable[currentRole]?.includes(targetRole) ?? false;
   }
 
   const [membersResult, invitesResult] = await Promise.all([
@@ -134,7 +146,11 @@ export default async function SettingsPage() {
                   {m.email ?? "—"}
                 </div>
               </div>
-              <RoleBadge role={m.role} />
+              {canChangeRole(m.id, m.role) ? (
+                <ChangeRoleSelect memberId={m.id} currentRole={m.role as UserRole} />
+              ) : (
+                <RoleBadge role={m.role} />
+              )}
               {canRemoveMember(m.id, m.role) && (
                 <RemoveMemberButton id={m.id} name={m.full_name ?? m.email ?? "this member"} />
               )}

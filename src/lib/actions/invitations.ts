@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { sendInviteEmail } from "@/lib/email/send-invite";
 import type { UserRole } from "@/types/database";
@@ -109,10 +110,11 @@ export async function acceptInvitation(data: {
   email: string;
   password: string;
 }): Promise<{ error?: string }> {
+  const admin = createAdminClient();
   const supabase = await createClient();
 
-  // Load invitation
-  const { data: inv, error: invError } = await supabase
+  // Load invitation via admin client — anon key is blocked by RLS here
+  const { data: inv, error: invError } = await admin
     .from("invitations")
     .select("*")
     .eq("token", data.token)
@@ -156,7 +158,7 @@ export async function acceptInvitation(data: {
   if (profileError) return { error: profileError.message };
 
   // Mark invitation accepted
-  await authed
+  await admin
     .from("invitations")
     .update({ accepted_at: new Date().toISOString() })
     .eq("id", inv.id);

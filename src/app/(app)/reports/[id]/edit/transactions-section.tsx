@@ -93,6 +93,8 @@ type AccountForm = {
   currency_code: string;
   funds_code: string;
   is_my_client: boolean;
+  person_id: string;
+  entity_id: string;
 };
 
 const EMPTY_TX: TransactionForm = {
@@ -119,6 +121,8 @@ const EMPTY_ACCOUNT: AccountForm = {
   currency_code: "NZD",
   funds_code: "",
   is_my_client: false,
+  person_id: "",
+  entity_id: "",
 };
 
 // XSD conduction_type codes (channel - action)
@@ -789,6 +793,8 @@ function PartySlot({
       currency_code: accountForm.currency_code || undefined,
       funds_code: accountForm.funds_code || undefined,
       is_my_client: accountForm.is_my_client,
+      person_id: accountForm.person_id || undefined,
+      entity_id: accountForm.entity_id || undefined,
     });
 
     if ("error" in accountRes && accountRes.error) {
@@ -854,6 +860,22 @@ function PartySlot({
                   {linkedAccount.institution_code_type?.toUpperCase()}: {linkedAccount.institution_code}
                 </div>
               )}
+              {linkedAccount.person_id && (() => {
+                const p = persons.find((x) => x.id === linkedAccount.person_id);
+                return p ? (
+                  <div className="text-text-tertiary text-[11px] mt-0.5">
+                    Person: {p.first_name} {p.last_name}
+                  </div>
+                ) : null;
+              })()}
+              {linkedAccount.entity_id && (() => {
+                const e = entities.find((x) => x.id === linkedAccount.entity_id);
+                return e ? (
+                  <div className="text-text-tertiary text-[11px]">
+                    Entity: {e.name}
+                  </div>
+                ) : null;
+              })()}
               {linkedAccount.is_my_client && (
                 <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">
                   My Client
@@ -1198,6 +1220,44 @@ function PartySlot({
               />
               This is my client's account
             </label>
+            {persons.length > 0 && (
+              <div>
+                <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
+                  Link Person (optional)
+                </label>
+                <select
+                  value={accountForm.person_id}
+                  onChange={(e) => setAccountForm({ ...accountForm, person_id: e.target.value })}
+                  className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="">None</option>
+                  {persons.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.first_name} {p.last_name} ({p.role.replace(/_/g, " ")})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {entities.length > 0 && (
+              <div>
+                <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
+                  Link Entity (optional)
+                </label>
+                <select
+                  value={accountForm.entity_id}
+                  onChange={(e) => setAccountForm({ ...accountForm, entity_id: e.target.value })}
+                  className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="">None</option>
+                  {entities.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}{e.role ? ` (${e.role.replace(/_/g, " ")})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="flex gap-2 pt-1">
             <button

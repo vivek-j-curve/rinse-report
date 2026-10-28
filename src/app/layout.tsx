@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   },
   description:
     "AML/CFT compliance filing platform. Guided suspicion intake, goAML XML generation, and SLA tracking for New Zealand reporting entities.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -592,7 +592,7 @@ export function ReportBuilder({ data }: { data: ReportData }) {
               <PersonsSection
                 reportId={report.id}
                 persons={data.persons}
-                questionnaireSubject={data.questionnaireSubject}
+                entities={data.entities}
                 onUpdate={() => router.refresh()}
               />
               <div className="border-t border-border pt-6">

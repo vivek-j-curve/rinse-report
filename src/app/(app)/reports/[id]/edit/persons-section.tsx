@@ -30,10 +30,16 @@ type PersonRecord = Record<string, unknown> & {
   source_of_wealth: string | null;
   is_my_client: boolean;
   role: string;
+  entity_id: string | null;
   comments: string | null;
   addresses: AddressRecord[];
   phones: PhoneRecord[];
   person_identifications: IdRecord[];
+};
+
+type EntityRecord = {
+  id: string;
+  name: string;
 };
 
 type AddressRecord = {
@@ -80,6 +86,7 @@ type PersonForm = {
   source_of_wealth: string;
   is_my_client: boolean;
   role: string;
+  entity_id: string;
   comments: string;
 };
 
@@ -98,6 +105,7 @@ const EMPTY_PERSON: PersonForm = {
   source_of_wealth: "",
   is_my_client: true,
   role: "my_client",
+  entity_id: "",
   comments: "",
 };
 
@@ -113,15 +121,16 @@ const ROLE_OPTIONS = [
 export function PersonsSection({
   reportId,
   persons,
-  questionnaireSubject,
+  entities,
   onUpdate,
 }: {
   reportId: string;
   persons: Record<string, unknown>[];
-  questionnaireSubject?: unknown;
+  entities?: Record<string, unknown>[];
   onUpdate: () => void;
 }) {
   const typedPersons = persons as unknown as PersonRecord[];
+  const typedEntities = (entities ?? []) as unknown as EntityRecord[];
   const [editingPerson, setEditingPerson] = useState<PersonForm | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(
     () => (persons as unknown as PersonRecord[]).find((p) => p.is_my_client)?.id ?? null
@@ -131,22 +140,6 @@ export function PersonsSection({
 
   function startNew() {
     setEditingPerson({ ...EMPTY_PERSON });
-    setExpandedId(null);
-  }
-
-  function prefillFromSubject() {
-    if (!questionnaireSubject) return;
-    const q = questionnaireSubject as Record<string, string>;
-    const firstNames = (q.first_names ?? "").trim().split(/\s+/);
-    setEditingPerson({
-      ...EMPTY_PERSON,
-      first_name: firstNames[0] ?? "",
-      middle_name: firstNames.slice(1).join(" "),
-      last_name: q.last_name ?? "",
-      birthdate: q.date_of_birth ?? "",
-      nationality: q.nationality ?? "",
-      occupation: q.occupation ?? "",
-    });
     setExpandedId(null);
   }
 
@@ -167,6 +160,7 @@ export function PersonsSection({
       source_of_wealth: p.source_of_wealth ?? "",
       is_my_client: p.is_my_client,
       role: p.role,
+      entity_id: p.entity_id ?? "",
       comments: p.comments ?? "",
     });
     setExpandedId(null);
@@ -185,6 +179,7 @@ export function PersonsSection({
       ...editingPerson,
       gender: (editingPerson.gender || undefined) as "M" | "F" | "U" | undefined,
       role: editingPerson.role as PersonForm["role"],
+      entity_id: editingPerson.entity_id || undefined,
     } as Parameters<typeof savePerson>[1]);
     setSaving(false);
 
@@ -215,25 +210,13 @@ export function PersonsSection({
           </p>
         </div>
         {!editingPerson && (
-          <div className="flex items-center gap-2">
-            {!!(questionnaireSubject &&
-              ((questionnaireSubject as Record<string, unknown>).first_names ||
-                (questionnaireSubject as Record<string, unknown>).last_name)) && (
-              <button
-                onClick={prefillFromSubject}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-medium border border-border rounded-full hover:bg-surface-alt transition-colors"
-              >
-                Prefill from subject
-              </button>
-            )}
-            <button
-              onClick={startNew}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover transition-colors"
-            >
-              <Plus size={14} />
-              Add Person
-            </button>
-          </div>
+          <button
+            onClick={startNew}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover transition-colors"
+          >
+            <Plus size={14} />
+            Add Person
+          </button>
         )}
       </div>
 
@@ -286,6 +269,19 @@ export function PersonsSection({
               }}
               options={ROLE_OPTIONS}
             />
+            {typedEntities.length > 0 && (
+              <SelectField
+                label="Associated Entity (optional)"
+                value={editingPerson.entity_id}
+                onChange={(v) =>
+                  setEditingPerson({ ...editingPerson, entity_id: v })
+                }
+                options={[
+                  { value: "", label: "None" },
+                  ...typedEntities.map((e) => ({ value: e.id, label: e.name })),
+                ]}
+              />
+            )}
             <SelectField
               label="Gender (optional)"
               value={editingPerson.gender}
@@ -401,6 +397,7 @@ export function PersonsSection({
           <PersonCard
             key={p.id}
             person={p}
+            entities={typedEntities}
             expanded={expandedId === p.id}
             onToggle={() =>
               setExpandedId(expandedId === p.id ? null : p.id)
@@ -418,6 +415,7 @@ export function PersonsSection({
 
 function PersonCard({
   person,
+  entities,
   expanded,
   onToggle,
   onEdit,
@@ -426,6 +424,7 @@ function PersonCard({
   onUpdate,
 }: {
   person: PersonRecord;
+  entities: EntityRecord[];
   expanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
@@ -434,6 +433,7 @@ function PersonCard({
   onUpdate: () => void;
 }) {
   const role = ROLE_OPTIONS.find((r) => r.value === person.role);
+  const linkedEntity = person.entity_id ? entities.find((e) => e.id === person.entity_id) : null;
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
@@ -455,10 +455,11 @@ function PersonCard({
               </span>
             )}
           </div>
-          <div className="text-[12px] text-text-tertiary mt-0.5 flex gap-3">
+          <div className="text-[12px] text-text-tertiary mt-0.5 flex gap-3 flex-wrap">
             {person.nationality && <span>{person.nationality}</span>}
             {person.birthdate && <span>DOB: {person.birthdate}</span>}
             {person.occupation && <span>{person.occupation}</span>}
+            {linkedEntity && <span className="text-accent/80">{linkedEntity.name}</span>}
           </div>
         </div>
         <svg

@@ -61,333 +61,6 @@ export async function getCaseSubjectPreview(caseId: string) {
   };
 }
 
-// ── Prefill report from questionnaire responses ──
-
-type SupabaseClient = Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>>;
-
-function parseAccountString(raw: string): { number: string; institution: string } {
-  const match = raw.match(/^([^(]+?)(?:\s+\(([^)]+)\))?$/);
-  return {
-    number: match?.[1]?.trim() ?? raw.trim(),
-    institution: match?.[2]?.trim() ?? "",
-  };
-}
-
-function mapIdType(t: string): "passport" | "drivers_licence" | "national_id" | "birth_certificate" | "other" {
-  if (t === "P") return "passport";
-  if (t === "D") return "drivers_licence";
-  if (t === "I") return "national_id";
-  return "other";
-}
-
-function isLikelyEntity(name: string) {
-  return /Ltd|Limited|Inc|Corp|Trust|Holdings|Trading|Group|Partnership|Association|Charity|Foundation/i.test(name);
-}
-
-async function prefillFromQuestionnaire(
-  reportId: string,
-  reportType: "STR" | "SAR" | "LCT" | "IFT",
-  responses: Record<string, string>,
-  organisationId: string,
-  supabase: SupabaseClient
-) {
-  const r = responses;
-
-  // Reason / narrative
-  if (r.narrative || r.action_taken) {
-    await supabase.from("reports").update({
-      xml_validation_errors: {
-        reason: r.narrative || null,
-        action: r.action_taken || null,
-        fiu_ref_number: null,
-      } as unknown as null,
-    }).eq("id", reportId);
-  }
-
-  // ── STR / SAR ──
-  if (reportType === "STR" || reportType === "SAR") {
-    const isCustomer = r.is_customer === "yes";
-
-    if (r.subject_type === "person" && r.first_names && r.last_name) {
-      const [firstName, ...rest] = r.first_names.trim().split(/\s+/);
-      const { data: person } = await supabase.from("report_persons").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        first_name: firstName,
-        last_name: r.last_name,
-        middle_name: rest.join(" ") || null,
-        birthdate: r.date_of_birth || null,
-        nationality: r.nationality || null,
-        occupation: r.occupation || null,
-        is_my_client: isCustomer,
-        role: isCustomer ? "my_client" : "counterparty",
-      }).select("id").single();
-
-      if (person) {
-        if (r.id_type && r.id_number) {
-          await supabase.from("person_identifications").insert({
-            person_id: person.id,
-            type: mapIdType(r.id_type),
-            number: r.id_number,
-            issue_country: r.id_country || null,
-          });
-        }
-        if (r.address || r.city || r.country) {
-          await supabase.from("addresses").insert({
-            person_id: person.id,
-            entity_id: null,
-            address_type: "residential",
-            address_line: r.address || null,
-            city: r.city || null,
-            country_code: r.country || null,
-          });
-        }
-      }
-    }
-
-    if (r.subject_type === "entity" && r.entity_name) {
-      const { data: entity } = await supabase.from("report_entities").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        name: r.entity_name,
-        is_my_client: isCustomer,
-        role: isCustomer ? "my_client" : "counterparty",
-        incorporation_number: r.registration_number || null,
-        business_type: r.entity_type || null,
-      }).select("id").single();
-
-      if (entity && (r.entity_address || r.entity_city || r.entity_country)) {
-        await supabase.from("addresses").insert({
-          person_id: null,
-          entity_id: entity.id,
-          address_type: "registered",
-          address_line: r.entity_address || null,
-          city: r.entity_city || null,
-          country_code: r.entity_country || null,
-        });
-      }
-    }
-
-    if (reportType === "STR" && r.has_transaction !== "no" && r.transaction_date && r.transaction_amount) {
-      const { data: txn } = await supabase.from("report_transactions").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        transaction_number: "1",
-        transaction_location: "New Zealand",
-        date_transaction: r.transaction_date,
-        transmode_code: r.transmode_code || "ET",
-        amount_local: parseFloat(r.transaction_amount),
-        currency_code_local: r.transaction_currency || "NZD",
-        transaction_description: r.transaction_description || null,
-      }).select("id").single();
-
-      if (txn) {
-        for (const [key, dir] of [["originating_account", "from"], ["beneficiary_account", "to"]] as const) {
-          const raw = r[key];
-          if (!raw) continue;
-          const { number, institution } = parseAccountString(raw);
-          const { data: acct } = await supabase.from("report_accounts").insert({
-            report_id: reportId,
-            organisation_id: organisationId,
-            account_number: number,
-            institution_name: institution || "Unknown",
-            is_my_client: false,
-          }).select("id").single();
-          if (acct) {
-            await supabase.from("transaction_parties").insert({
-              transaction_id: txn.id,
-              direction: dir,
-              party_type: "account",
-              account_id: acct.id,
-            });
-          }
-        }
-      }
-    }
-  }
-
-  // ── LCT ──
-  if (reportType === "LCT") {
-    let personId: string | null = null;
-    let entityId: string | null = null;
-
-    if (r.subject_type === "person" && r.first_names && r.last_name) {
-      const [firstName, ...rest] = r.first_names.trim().split(/\s+/);
-      const { data: person } = await supabase.from("report_persons").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        first_name: firstName,
-        last_name: r.last_name,
-        middle_name: rest.join(" ") || null,
-        birthdate: r.date_of_birth || null,
-        nationality: r.nationality || null,
-        is_my_client: true,
-        role: "my_client",
-      }).select("id").single();
-      if (person) personId = person.id;
-    }
-
-    if (r.subject_type === "entity" && r.entity_name) {
-      const { data: entity } = await supabase.from("report_entities").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        name: r.entity_name,
-        is_my_client: true,
-        role: "my_client",
-        incorporation_number: r.registration_number || null,
-        incorporation_country: r.entity_country || null,
-      }).select("id").single();
-      if (entity) entityId = entity.id;
-    }
-
-    let accountId: string | null = null;
-    if (r.account_number) {
-      const { data: acct } = await supabase.from("report_accounts").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        account_number: r.account_number,
-        institution_name: r.account_institution || "Unknown",
-        is_my_client: true,
-        person_id: personId,
-        entity_id: entityId,
-      }).select("id").single();
-      if (acct) accountId = acct.id;
-    }
-
-    if (r.lct_date && r.lct_amount) {
-      const { data: txn } = await supabase.from("report_transactions").insert({
-        report_id: reportId,
-        organisation_id: organisationId,
-        transaction_number: "1",
-        transaction_location: "New Zealand",
-        date_transaction: r.lct_date,
-        transmode_code: "CA",
-        amount_local: parseFloat(r.lct_amount),
-        currency_code_local: r.lct_currency || "NZD",
-      }).select("id").single();
-
-      if (txn && accountId) {
-        const dir = r.lct_direction === "withdrawal" ? "from" : "to";
-        await supabase.from("transaction_parties").insert({
-          transaction_id: txn.id,
-          direction: dir,
-          party_type: "account",
-          account_id: accountId,
-        });
-      }
-
-      if (txn && r.conductor_different === "yes" && r.conductor_name) {
-        const parts = r.conductor_name.trim().split(/\s+/);
-        const { data: conductor } = await supabase.from("report_persons").insert({
-          report_id: reportId,
-          organisation_id: organisationId,
-          first_name: parts[0],
-          last_name: parts.slice(1).join(" ") || parts[0],
-          is_my_client: false,
-          role: "conductor",
-        }).select("id").single();
-
-        if (conductor) {
-          if (r.conductor_id_type && r.conductor_id_number) {
-            await supabase.from("person_identifications").insert({
-              person_id: conductor.id,
-              type: mapIdType(r.conductor_id_type),
-              number: r.conductor_id_number,
-            });
-          }
-          await supabase.from("transaction_parties").insert({
-            transaction_id: txn.id,
-            direction: r.lct_direction === "withdrawal" ? "from" : "to",
-            party_type: "person",
-            person_id: conductor.id,
-          });
-        }
-      }
-    }
-  }
-
-  // ── IFT ──
-  if (reportType === "IFT" && r.ift_date && r.ift_amount_local) {
-    const { data: txn } = await supabase.from("report_transactions").insert({
-      report_id: reportId,
-      organisation_id: organisationId,
-      transaction_number: "1",
-      transaction_location: "New Zealand",
-      date_transaction: r.ift_date,
-      transmode_code: "WT",
-      amount_local: parseFloat(r.ift_amount_local),
-      currency_code_local: "NZD",
-      amount_foreign: r.ift_amount_foreign ? parseFloat(r.ift_amount_foreign) : null,
-      currency_code_foreign: r.ift_currency_foreign || null,
-    }).select("id").single();
-
-    if (txn) {
-      for (const [nameKey, countryKey, acctKey, instKey, dir] of [
-        ["sender_name", "sender_country", "sender_account", "sender_institution", "from"],
-        ["receiver_name", "receiver_country", "receiver_account", "receiver_institution", "to"],
-      ] as const) {
-        const name = r[nameKey];
-        if (!name) continue;
-
-        let linkedPersonId: string | null = null;
-        let linkedEntityId: string | null = null;
-
-        if (isLikelyEntity(name)) {
-          const { data: entity } = await supabase.from("report_entities").insert({
-            report_id: reportId,
-            organisation_id: organisationId,
-            name,
-            is_my_client: false,
-            role: "counterparty",
-            incorporation_country: r[countryKey] || null,
-          }).select("id").single();
-          if (entity) linkedEntityId = entity.id;
-        } else {
-          const parts = name.trim().split(/\s+/);
-          const { data: person } = await supabase.from("report_persons").insert({
-            report_id: reportId,
-            organisation_id: organisationId,
-            first_name: parts[0],
-            last_name: parts.slice(1).join(" ") || parts[0],
-            is_my_client: false,
-            role: "counterparty",
-          }).select("id").single();
-          if (person) linkedPersonId = person.id;
-        }
-
-        const acctRaw = r[acctKey];
-        if (acctRaw) {
-          const { data: acct } = await supabase.from("report_accounts").insert({
-            report_id: reportId,
-            organisation_id: organisationId,
-            account_number: acctRaw,
-            institution_name: r[instKey] || "Unknown",
-            is_my_client: false,
-            person_id: linkedPersonId,
-            entity_id: linkedEntityId,
-          }).select("id").single();
-          if (acct) {
-            await supabase.from("transaction_parties").insert({
-              transaction_id: txn.id,
-              direction: dir,
-              party_type: "account",
-              account_id: acct.id,
-            });
-          }
-        } else {
-          await supabase.from("transaction_parties").insert({
-            transaction_id: txn.id,
-            direction: dir,
-            party_type: linkedEntityId ? "entity" : "person",
-            person_id: linkedPersonId,
-            entity_id: linkedEntityId,
-          });
-        }
-      }
-    }
-  }
-}
-
 // ── Create a draft report ──
 
 export async function createDraftReport(
@@ -448,15 +121,6 @@ export async function createDraftReport(
   if (insertError) {
     return { error: `Failed to create report: ${insertError.message}` };
   }
-
-  const responses = (questionnaire.responses ?? {}) as Record<string, string>;
-  await prefillFromQuestionnaire(
-    newReport.id,
-    reportType,
-    responses,
-    profile.organisation_id,
-    supabase
-  );
 
   revalidatePath("/reports");
   revalidatePath(`/suspicions/${caseId}`);
@@ -562,6 +226,7 @@ export async function savePerson(
     source_of_wealth?: string;
     is_my_client: boolean;
     role: "my_client" | "counterparty" | "conductor" | "signatory" | "director" | "beneficiary";
+    entity_id?: string;
     comments?: string;
   }
 ) {
@@ -586,13 +251,15 @@ export async function savePerson(
     source_of_wealth: person.source_of_wealth || null,
     is_my_client: person.is_my_client,
     role: person.role,
+    entity_id: person.entity_id || null,
     comments: person.comments || null,
   };
 
   if (person.id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
       .from("report_persons")
-      .update(row)
+      .update(row as any)
       .eq("id", person.id)
       .eq("organisation_id", profile.organisation_id);
     if (error) return { error: error.message };
@@ -600,9 +267,10 @@ export async function savePerson(
     return { success: true, id: person.id };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await supabase
     .from("report_persons")
-    .insert(row)
+    .insert(row as any)
     .select("id")
     .single();
   if (error) return { error: error.message };

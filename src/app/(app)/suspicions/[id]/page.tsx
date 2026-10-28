@@ -9,6 +9,7 @@ import { StatusUpdater } from "./status-updater";
 import { QuestionnaireWizard } from "./questionnaire-wizard";
 import { GenerateReportButton } from "./generate-report-button";
 import { AttachmentsPanel } from "./attachments-panel";
+import { MoveToCaseModal } from "./move-to-case-modal";
 
 function countBizDays(from: Date, to: Date): number {
   let count = 0;
@@ -181,6 +182,21 @@ export default async function CaseDetailPage({
                 <dd>{caseRow.reporting_entity?.name ?? "-"}</dd>
               </div>
             </dl>
+
+            <Link
+              href={`/cases/${caseRow.id}`}
+              className="block w-full mt-3 px-3 py-2 rounded-lg border border-border text-[12px] font-medium text-text-secondary hover:bg-surface-alt transition-colors text-center"
+            >
+              View case details
+            </Link>
+
+            {suspicion && (
+              <MoveToCaseModal
+                suspicionId={suspicion.id}
+                currentCaseId={caseRow.id}
+                reportingEntityId={caseRow.reporting_entity_id}
+              />
+            )}
           </div>
 
           <div className="bg-surface border border-border rounded-[10px] p-5">

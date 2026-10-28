@@ -355,16 +355,22 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center gap-4">
             <Link
+              href="/privacy"
+              className="text-text-tertiary hover:text-text-secondary text-[12px] transition-colors"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-text-tertiary hover:text-text-secondary text-[12px] transition-colors"
+            >
+              Terms
+            </Link>
+            <Link
               href="/login"
               className="text-text-tertiary hover:text-text-secondary text-[12px] transition-colors"
             >
               Sign in
-            </Link>
-            <Link
-              href="/sign-up"
-              className="text-text-tertiary hover:text-text-secondary text-[12px] transition-colors"
-            >
-              Sign up
             </Link>
           </div>
         </div>

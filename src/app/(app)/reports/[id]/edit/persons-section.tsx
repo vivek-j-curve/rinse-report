@@ -138,6 +138,11 @@ export function PersonsSection({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Live record for the person being edited — used to display sub-records in the form
+  const editingPersonRecord = editingPerson?.id
+    ? typedPersons.find((p) => p.id === editingPerson.id) ?? null
+    : null;
+
   function startNew() {
     setEditingPerson({ ...EMPTY_PERSON });
     setExpandedId(null);
@@ -187,7 +192,9 @@ export function PersonsSection({
       setError(res.error);
       return;
     }
-    setEditingPerson(null);
+    // Keep form open so user can add sub-records (address, phone, ID) in the same form
+    const returnedId = "id" in res ? res.id : editingPerson.id;
+    setEditingPerson((prev) => (prev ? { ...prev, id: returnedId } : null));
     onUpdate();
   }
 
@@ -367,7 +374,7 @@ export function PersonsSection({
               disabled={saving}
               className="px-4 py-2 text-[13px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover transition-colors disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Save Person"}
+              {saving ? "Saving..." : "Save Details"}
             </button>
             <button
               onClick={() => {
@@ -376,9 +383,39 @@ export function PersonsSection({
               }}
               className="px-4 py-2 text-[13px] font-medium border border-border rounded-full hover:bg-surface-alt transition-colors"
             >
-              Cancel
+              {editingPerson.id ? "Done" : "Cancel"}
             </button>
           </div>
+
+          {/* Sub-records — shown once the person has been saved and has an ID */}
+          {editingPerson.id && (
+            <div className="border-t border-border mt-6 pt-5 space-y-5">
+              <p className="text-[11.5px] text-text-tertiary -mb-1">
+                Save details above first, then add address, contact and identification below.
+              </p>
+              <SubRecords
+                title="Addresses"
+                items={editingPersonRecord?.addresses ?? []}
+                personId={editingPerson.id}
+                type="address"
+                onUpdate={onUpdate}
+              />
+              <SubRecords
+                title="Phone Numbers"
+                items={editingPersonRecord?.phones ?? []}
+                personId={editingPerson.id}
+                type="phone"
+                onUpdate={onUpdate}
+              />
+              <SubRecords
+                title="Identification Documents"
+                items={editingPersonRecord?.person_identifications ?? []}
+                personId={editingPerson.id}
+                type="identification"
+                onUpdate={onUpdate}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -480,13 +517,13 @@ function PersonCard({
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-border pt-3 space-y-4">
+        <div className="px-4 pb-4 border-t border-border pt-3 space-y-3">
           <div className="flex gap-2">
             <button
               onClick={onEdit}
               className="text-[12px] font-medium text-accent hover:underline"
             >
-              Edit details
+              Edit / Add details
             </button>
             <span className="text-text-tertiary">·</span>
             <button
@@ -497,28 +534,31 @@ function PersonCard({
             </button>
           </div>
 
-          {/* Sub-records */}
-          <SubRecords
-            title="Addresses"
-            items={person.addresses}
-            personId={person.id}
-            type="address"
-            onUpdate={onUpdate}
-          />
-          <SubRecords
-            title="Phone Numbers"
-            items={person.phones}
-            personId={person.id}
-            type="phone"
-            onUpdate={onUpdate}
-          />
-          <SubRecords
-            title="Identification Documents"
-            items={person.person_identifications}
-            personId={person.id}
-            type="identification"
-            onUpdate={onUpdate}
-          />
+          {/* Read-only sub-record summary */}
+          {person.addresses.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-1">Addresses</p>
+              {person.addresses.map((a) => (
+                <p key={a.id} className="text-[12.5px] text-text">{formatAddress(a)}</p>
+              ))}
+            </div>
+          )}
+          {person.phones.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-1">Phone Numbers</p>
+              {person.phones.map((ph) => (
+                <p key={ph.id} className="text-[12.5px] text-text">{formatPhone(ph)}</p>
+              ))}
+            </div>
+          )}
+          {person.person_identifications.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-1">Identification</p>
+              {person.person_identifications.map((id) => (
+                <p key={id.id} className="text-[12.5px] text-text">{formatId(id)}</p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

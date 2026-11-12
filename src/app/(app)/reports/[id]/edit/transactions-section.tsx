@@ -1132,15 +1132,13 @@ function PartySlot({
               <input
                 type="text"
                 value={accountForm.account_number}
-                onChange={(e) => setAccountForm({ ...accountForm, account_number: e.target.value })}
-                placeholder="e.g. 01-0142-0000000-00"
+                onChange={(e) => setAccountForm({ ...accountForm, account_number: e.target.value.replace(/-/g, "") })}
+                placeholder="e.g. 010142000000000"
                 className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 font-mono"
               />
-              {accountForm.account_number.includes(" ") && (
-                <p className="text-[11px] text-amber mt-0.5">
-                  Account number contains spaces — the goAML XSD does not allow spaces.
-                </p>
-              )}
+              <p className="text-[11px] text-text-tertiary mt-0.5">
+                Numbers only — no dashes or spaces. Dashes are removed automatically.
+              </p>
             </div>
             <div>
               <label className="block text-[11px] font-medium text-text-secondary mb-0.5">

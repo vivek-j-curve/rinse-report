@@ -53,6 +53,14 @@ export function ReasonSection({
     setOpenHelpers((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
+  const FIU_TEMPLATE =
+    "A suspicious unusual transaction report was raised in relation to customer [full name] due to [suspicion]. [Full name], date of birth [DD/MM/YYYY], [sex], with the address of [full address] who has been a customer of [your entity name] since [DD/MM/YYYY] who has been [suspected/confirmed] [typology] totalling NZD$[amount] on the date of the [DD/MM/YYYY]. Given this, we have the following suspicion: [typology]. [ID type][ID number]";
+
+  function applyFiuTemplate() {
+    setReason(FIU_TEMPLATE);
+    setSaved(false);
+  }
+
   // Refs so registered callbacks always see current values without stale closures
   const reasonRef = useRef(reason);
   reasonRef.current = reason;
@@ -171,15 +179,26 @@ export function ReasonSection({
               </label>
               <InfoToggle open={!!openHelpers.reason} onToggle={() => toggleHelper("reason")} />
             </div>
-            {reportType === "SAR" && (
-              <button
-                type="button"
-                onClick={() => { setUseTemplate((v) => !v); setSaved(false); }}
-                className="text-[11.5px] font-medium text-accent hover:underline"
-              >
-                {useTemplate ? "Switch to freeform" : "Use SAR template"}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {!useTemplate && (
+                <button
+                  type="button"
+                  onClick={applyFiuTemplate}
+                  className="text-[11.5px] font-medium text-text-secondary hover:text-accent hover:underline"
+                >
+                  Use FIU template
+                </button>
+              )}
+              {reportType === "SAR" && (
+                <button
+                  type="button"
+                  onClick={() => { setUseTemplate((v) => !v); setSaved(false); }}
+                  className="text-[11.5px] font-medium text-accent hover:underline"
+                >
+                  {useTemplate ? "Switch to freeform" : "Use SAR template"}
+                </button>
+              )}
+            </div>
           </div>
 
           {useTemplate ? (

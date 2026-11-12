@@ -10,6 +10,7 @@ import type {
   GoAMLAddress,
   GoAMLPersonIdentification,
   GoAMLActivity,
+  TransactionStatus,
 } from "./types";
 
 interface DbReport {
@@ -41,6 +42,7 @@ interface DbTransaction {
   currency_code_foreign: string | null;
   late_deposit: boolean;
   is_suspicious?: boolean;
+  transaction_status?: string | null;
   comments: string | null;
   goods_description: string | null;
 }
@@ -230,6 +232,16 @@ const ID_TYPE_MAP: Record<string, string> = {
   other: "E",             // Other
 };
 
+// transaction_status_type enum (XSD): "-"=Unknown, "C"=Complete, "I"=Incomplete/attempted, "U"=Uploaded
+const TRANSACTION_STATUS_MAP: Record<string, TransactionStatus> = {
+  complete: "C",
+  completed: "C",
+  incomplete: "I",
+  attempted: "I",
+  uploaded: "U",
+  unknown: "-",
+};
+
 // account_status_type enum (XSD): A=Active, B=Closed by customer, C=Closed by RE, D=Closed due to inactivity, E=Inactive, F=New, G=No account
 const ACCOUNT_STATUS_MAP: Record<string, string> = {
   active: "A",
@@ -323,6 +335,18 @@ function mapTransaction(
         goamlTx.t_to = side;
       }
     }
+  }
+
+  if (tx.transaction_status) {
+    const mapped = TRANSACTION_STATUS_MAP[tx.transaction_status.toLowerCase()];
+    if (mapped) goamlTx.transaction_status = mapped;
+  }
+
+  if (tx.goods_description) {
+    goamlTx.goods_services = [{
+      item_type: "I",
+      description: tx.goods_description,
+    }];
   }
 
   return goamlTx;

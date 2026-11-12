@@ -39,6 +39,28 @@ export interface ReportingPerson {
   occupation?: string;
 }
 
+export type TransactionStatus = "-" | "C" | "I" | "U";
+
+export interface GoAMLTransItem {
+  item_type: string;
+  item_make?: string;
+  description?: string;
+  previously_registered_to?: string;
+  presently_registered_to?: string;
+  estimated_value?: number;
+  status_code?: string;
+  status_comments?: string;
+  disposed_value?: number;
+  currency_code?: string;
+  size?: number;
+  size_uom?: string;
+  address?: GoAMLAddress;
+  registration_date?: string;
+  registration_number?: string;
+  identification_number?: string;
+  comments?: string;
+}
+
 export interface GoAMLTransaction {
   transactionnumber: string;
   internal_ref_number?: string;
@@ -53,10 +75,12 @@ export interface GoAMLTransaction {
   transmode_code: string;
   transmode_comment?: string;
   amount_local: number;
+  transaction_status?: TransactionStatus;
   t_from?: GoAMLTransactionSide;
   t_from_my_client?: GoAMLTransactionSide;
   t_to?: GoAMLTransactionSide;
   t_to_my_client?: GoAMLTransactionSide;
+  goods_services?: GoAMLTransItem[];
   comments?: string;
 }
 

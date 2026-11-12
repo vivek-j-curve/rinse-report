@@ -10,6 +10,7 @@ import type {
   GoAMLAddress,
   GoAMLPersonIdentification,
   GoAMLActivity,
+  GoAMLTransItem,
 } from "./types";
 
 export function buildGoAMLXml(report: GoAMLReport): string {
@@ -97,6 +98,9 @@ function writeTransaction(
   tx: GoAMLTransaction
 ) {
   node.ele("transactionnumber").txt(tx.transactionnumber);
+  if (tx.transaction_is_suspicious) {
+    node.ele("transaction_is_suspicious").txt("true");
+  }
   if (tx.internal_ref_number) {
     node.ele("internal_ref_number").txt(tx.internal_ref_number);
   }
@@ -107,9 +111,6 @@ function writeTransaction(
   node.ele("date_transaction").txt(tx.date_transaction);
   if (tx.teller) node.ele("teller").txt(tx.teller);
   if (tx.authorized) node.ele("authorized").txt(tx.authorized);
-  if (tx.transaction_is_suspicious) {
-    node.ele("transaction_is_suspicious").txt("true");
-  }
   if (tx.late_deposit !== undefined) {
     node.ele("late_deposit").txt(tx.late_deposit ? "true" : "false");
     if (tx.date_posting) node.ele("date_posting").txt(tx.date_posting);
@@ -119,6 +120,10 @@ function writeTransaction(
     node.ele("transmode_comment").txt(tx.transmode_comment);
   }
   node.ele("amount_local").txt(String(tx.amount_local));
+
+  if (tx.transaction_status) {
+    node.ele("transaction_status").txt(tx.transaction_status);
+  }
 
   if (tx.t_from_my_client) {
     writeTransactionSide(node.ele("t_from_my_client"), tx.t_from_my_client, "from");
@@ -130,6 +135,13 @@ function writeTransaction(
     writeTransactionSide(node.ele("t_to_my_client"), tx.t_to_my_client, "to");
   } else if (tx.t_to) {
     writeTransactionSide(node.ele("t_to"), tx.t_to, "to");
+  }
+
+  if (tx.goods_services?.length) {
+    const goodsNode = node.ele("goods_services");
+    for (const item of tx.goods_services) {
+      writeTransItem(goodsNode.ele("item"), item);
+    }
   }
 
   if (tx.comments) node.ele("comments").txt(tx.comments);
@@ -411,6 +423,29 @@ function writeAddress(
   node.ele("country_code").txt(addr.country_code);
   if (addr.state) node.ele("state").txt(addr.state);
   if (addr.comments) node.ele("comments").txt(addr.comments);
+}
+
+function writeTransItem(
+  node: ReturnType<ReturnType<typeof create>["ele"]>,
+  item: GoAMLTransItem
+) {
+  node.ele("item_type").txt(item.item_type);
+  if (item.item_make) node.ele("item_make").txt(item.item_make);
+  if (item.description) node.ele("description").txt(item.description);
+  if (item.previously_registered_to) node.ele("previously_registered_to").txt(item.previously_registered_to);
+  if (item.presently_registered_to) node.ele("presently_registered_to").txt(item.presently_registered_to);
+  if (item.estimated_value !== undefined) node.ele("estimated_value").txt(String(item.estimated_value));
+  if (item.status_code) node.ele("status_code").txt(item.status_code);
+  if (item.status_comments) node.ele("status_comments").txt(item.status_comments);
+  if (item.disposed_value !== undefined) node.ele("disposed_value").txt(String(item.disposed_value));
+  if (item.currency_code) node.ele("currency_code").txt(item.currency_code);
+  if (item.size !== undefined) node.ele("size").txt(String(item.size));
+  if (item.size_uom) node.ele("size_uom").txt(item.size_uom);
+  if (item.address) writeAddress(node.ele("address"), item.address);
+  if (item.registration_date) node.ele("registration_date").txt(item.registration_date);
+  if (item.registration_number) node.ele("registration_number").txt(item.registration_number);
+  if (item.identification_number) node.ele("identification_number").txt(item.identification_number);
+  if (item.comments) node.ele("comments").txt(item.comments);
 }
 
 function writeActivity(

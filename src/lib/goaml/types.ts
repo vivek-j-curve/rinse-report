@@ -41,6 +41,33 @@ export interface ReportingPerson {
 
 export type TransactionStatus = "-" | "C" | "I" | "U";
 
+export type EntityStatus = "-" | "A" | "D" | "I" | "IL";
+
+export interface GoAMLSocialAccount {
+  platform: string;
+  user_name: string;
+  comments?: string;
+}
+
+export interface GoAMLAdditionalInfo {
+  info_subject: string;
+  info_text?: string;
+  info_numeric?: number;
+  info_date?: string;
+  info_boolean?: boolean;
+}
+
+export interface GoAMLRelatedPerson {
+  person: GoAMLPerson;
+  comments?: string;
+}
+
+export interface GoAMLRelatedEntity {
+  entity: GoAMLEntity;
+  share_percentage?: number;
+  comments?: string;
+}
+
 export interface GoAMLTransItem {
   item_type: string;
   item_make?: string;
@@ -141,7 +168,6 @@ export interface GoAMLPerson {
   last_name: string;
   birthdate?: string;
   birth_place?: string;
-  mothers_name?: string;
   ssn?: string;
   passport_number?: string;
   passport_country?: string;
@@ -153,10 +179,13 @@ export interface GoAMLPerson {
   phones?: GoAMLPhone[];
   addresses?: GoAMLAddress[];
   email?: string;
+  social_media?: GoAMLSocialAccount[];
   occupation?: string;
-  employer_name?: string;
   identifications?: GoAMLPersonIdentification[];
+  tax_number?: string;
   source_of_wealth?: string;
+  related_persons?: GoAMLRelatedPerson[];
+  additional_information?: GoAMLAdditionalInfo[];
   comments?: string;
   is_my_client: boolean;
 }
@@ -174,8 +203,11 @@ export interface GoAMLEntity {
   incorporation_country_code?: string;
   director_ids?: GoAMLPerson[];
   incorporation_date?: string;
+  entity_status?: EntityStatus;
+  entity_status_date?: string;
   tax_number?: string;
   tax_reg_number?: string;
+  related_entities?: GoAMLRelatedEntity[];
   comments?: string;
   is_my_client: boolean;
 }

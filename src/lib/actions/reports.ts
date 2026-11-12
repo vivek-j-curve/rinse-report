@@ -222,8 +222,11 @@ export async function savePerson(
     nationality?: string;
     residence?: string;
     occupation?: string;
-    mothers_name?: string;
+    tax_number?: string;
     source_of_wealth?: string;
+    social_media?: Array<{ platform: string; user_name: string; comments?: string }>;
+    related_persons?: Array<{ first_name: string; last_name: string; comments?: string }>;
+    additional_information?: Array<{ info_subject: string; info_text?: string }>;
     is_my_client: boolean;
     is_suspected?: boolean;
     email?: string;
@@ -249,8 +252,11 @@ export async function savePerson(
     nationality: person.nationality || null,
     residence: person.residence || null,
     occupation: person.occupation || null,
-    mothers_name: person.mothers_name || null,
+    tax_number: person.tax_number || null,
     source_of_wealth: person.source_of_wealth || null,
+    social_media: person.social_media?.length ? person.social_media : null,
+    related_persons: person.related_persons?.length ? person.related_persons : null,
+    additional_information: person.additional_information?.length ? person.additional_information : null,
     is_my_client: person.is_my_client,
     is_suspected: person.is_suspected ?? false,
     email: person.email || null,
@@ -744,6 +750,9 @@ export async function saveEntity(
     incorporation_country?: string;
     incorporation_legal_form?: "limited" | "partnership" | "sole_trader" | "trust" | "other";
     incorporation_number?: string;
+    entity_status?: string;
+    entity_status_date?: string;
+    related_entities?: Array<{ name: string; share_percentage?: number; comments?: string }>;
     comments?: string;
   }
 ) {
@@ -767,6 +776,9 @@ export async function saveEntity(
       | "limited" | "partnership" | "sole_trader" | "trust" | "other"
       | null,
     incorporation_number: entity.incorporation_number || null,
+    entity_status: entity.entity_status || null,
+    entity_status_date: entity.entity_status_date || null,
+    related_entities: entity.related_entities?.length ? entity.related_entities : null,
     comments: entity.comments || null,
   };
 
@@ -946,7 +958,8 @@ export async function generateReportXml(reportId: string) {
     },
     reporting_entity: caseData.reporting_entities,
     case_record: { title: caseData.title },
-    transactions: transactions.map((tx) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transactions: (transactions.map((tx) => ({
       ...tx,
       parties: (tx.transaction_parties ?? []).map(
         (tp: {
@@ -996,7 +1009,9 @@ export async function generateReportXml(reportId: string) {
           };
         }
       ),
-    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }))) as any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     persons: persons.map((p) => ({
       ...p,
       identifications: (p.person_identifications ?? []).map(
@@ -1018,11 +1033,14 @@ export async function generateReportXml(reportId: string) {
           comments: id.comments,
         })
       ),
-    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    })) as any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     entities: entities.map((e) => ({
       ...e,
       business_type: e.business_type,
-    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    })) as any[],
     accounts: (accounts as Array<{
       person_id: string | null;
       entity_id: string | null;
@@ -1088,7 +1106,8 @@ export async function generateReportXml(reportId: string) {
             }
           : null,
       };
-    }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any[],
     indicators,
     reason: reasonData?.reason,
   };

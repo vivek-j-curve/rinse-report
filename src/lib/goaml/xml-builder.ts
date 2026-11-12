@@ -11,6 +11,10 @@ import type {
   GoAMLPersonIdentification,
   GoAMLActivity,
   GoAMLTransItem,
+  GoAMLSocialAccount,
+  GoAMLAdditionalInfo,
+  GoAMLRelatedPerson,
+  GoAMLRelatedEntity,
 } from "./types";
 
 export function buildGoAMLXml(report: GoAMLReport): string {
@@ -286,7 +290,6 @@ function writePerson(
     node.ele("birthdate").txt(person.birthdate);
   }
   if (person.birth_place) node.ele("birth_place").txt(person.birth_place);
-  if (person.mothers_name) node.ele("mothers_name").txt(person.mothers_name);
   if (person.ssn) node.ele("ssn").txt(person.ssn);
   if (person.passport_number) {
     node.ele("passport_number").txt(person.passport_number);
@@ -312,17 +315,33 @@ function writePerson(
     }
   }
   if (person.email) node.ele("email").txt(person.email);
-  if (person.occupation) node.ele("occupation").txt(person.occupation);
-  if (person.employer_name) {
-    node.ele("employer_name").txt(person.employer_name);
+  if (person.social_media?.length) {
+    const smNode = node.ele("social_media");
+    for (const sm of person.social_media) {
+      writeSocialAccount(smNode.ele("social_account"), sm);
+    }
   }
+  if (person.occupation) node.ele("occupation").txt(person.occupation);
   if (person.identifications?.length) {
     for (const id of person.identifications) {
       writePersonIdentification(node.ele("identification"), id);
     }
   }
+  if (person.tax_number) node.ele("tax_number").txt(person.tax_number);
   if (person.source_of_wealth) {
     node.ele("source_of_wealth").txt(person.source_of_wealth);
+  }
+  if (person.related_persons?.length) {
+    const rpNode = node.ele("related_persons");
+    for (const rp of person.related_persons) {
+      writeRelatedPerson(rpNode.ele("person_related_person"), rp);
+    }
+  }
+  if (person.additional_information?.length) {
+    const aiNode = node.ele("additional_information");
+    for (const ai of person.additional_information) {
+      writeAdditionalInfo(aiNode.ele("additional_info"), ai);
+    }
   }
   if (person.comments) node.ele("comments").txt(person.comments);
 }
@@ -345,6 +364,10 @@ function writeEntity(
     node.ele("incorporation_number").txt(entity.incorporation_number);
   }
   if (entity.business) node.ele("business").txt(entity.business);
+  if (entity.entity_status) {
+    node.ele("entity_status").txt(entity.entity_status);
+    if (entity.entity_status_date) node.ele("entity_status_date").txt(entity.entity_status_date);
+  }
   if (entity.phones?.length) {
     const phonesNode = node.ele("phones");
     for (const phone of entity.phones) {
@@ -370,6 +393,12 @@ function writeEntity(
     for (const director of entity.director_ids) {
       const dirNode = node.ele("director_id");
       writePerson(dirNode, director, false);
+    }
+  }
+  if (entity.related_entities?.length) {
+    const reNode = node.ele("related_entities");
+    for (const re of entity.related_entities) {
+      writeRelatedEntity(reNode.ele("entity_related_entity"), re);
     }
   }
   if (entity.incorporation_date) {
@@ -423,6 +452,45 @@ function writeAddress(
   node.ele("country_code").txt(addr.country_code);
   if (addr.state) node.ele("state").txt(addr.state);
   if (addr.comments) node.ele("comments").txt(addr.comments);
+}
+
+function writeSocialAccount(
+  node: ReturnType<ReturnType<typeof create>["ele"]>,
+  sm: GoAMLSocialAccount
+) {
+  node.ele("platform").txt(sm.platform);
+  node.ele("user_name").txt(sm.user_name);
+  if (sm.comments) node.ele("comments").txt(sm.comments);
+}
+
+function writeAdditionalInfo(
+  node: ReturnType<ReturnType<typeof create>["ele"]>,
+  ai: GoAMLAdditionalInfo
+) {
+  node.ele("info_subject").txt(ai.info_subject);
+  if (ai.info_text) node.ele("info_text").txt(ai.info_text);
+  if (ai.info_numeric !== undefined) node.ele("info_numeric").txt(String(ai.info_numeric));
+  if (ai.info_date) node.ele("info_date").txt(ai.info_date);
+  if (ai.info_boolean !== undefined) node.ele("info_boolean").txt(String(ai.info_boolean));
+}
+
+function writeRelatedPerson(
+  node: ReturnType<ReturnType<typeof create>["ele"]>,
+  rp: GoAMLRelatedPerson
+) {
+  node.ele("person_person_relation").txt("-");
+  writePerson(node.ele("person"), rp.person, false);
+  if (rp.comments) node.ele("comments").txt(rp.comments);
+}
+
+function writeRelatedEntity(
+  node: ReturnType<ReturnType<typeof create>["ele"]>,
+  re: GoAMLRelatedEntity
+) {
+  node.ele("entity_entity_relation").txt("-");
+  writeEntity(node.ele("entity"), re.entity, false);
+  if (re.share_percentage !== undefined) node.ele("share_percentage").txt(String(re.share_percentage));
+  if (re.comments) node.ele("comments").txt(re.comments);
 }
 
 function writeTransItem(

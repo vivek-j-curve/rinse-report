@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Plus } from "@/components/ui/icons";
 import { CountrySelect } from "@/components/ui/country-select";
 import {
@@ -44,6 +44,9 @@ type PhoneRecord = {
   number: string;
 };
 
+type EntityStatus = "-" | "A" | "D" | "I" | "IL";
+type RelatedEntityItem = { name: string; share_percentage?: number; comments?: string };
+
 type EntityForm = {
   id?: string;
   name: string;
@@ -57,6 +60,9 @@ type EntityForm = {
   incorporation_country: string;
   incorporation_legal_form: string;
   incorporation_number: string;
+  entity_status: EntityStatus | "";
+  entity_status_date: string;
+  related_entities: RelatedEntityItem[];
   comments: string;
 };
 
@@ -72,8 +78,20 @@ const EMPTY_ENTITY: EntityForm = {
   incorporation_country: "",
   incorporation_legal_form: "",
   incorporation_number: "",
+  entity_status: "",
+  entity_status_date: "",
+  related_entities: [],
   comments: "",
 };
+
+const ENTITY_STATUS_OPTIONS = [
+  { value: "", label: "Select status..." },
+  { value: "-", label: "Unknown" },
+  { value: "A", label: "Active" },
+  { value: "D", label: "Dissolved" },
+  { value: "I", label: "Inactive" },
+  { value: "IL", label: "In Liquidation" },
+];
 
 const ROLE_OPTIONS = [
   { value: "my_client", label: "My Client" },
@@ -131,6 +149,9 @@ export function EntitiesSection({
       incorporation_country: e.incorporation_country ?? "",
       incorporation_legal_form: e.incorporation_legal_form ?? "",
       incorporation_number: e.incorporation_number ?? "",
+      entity_status: (e as any).entity_status ?? "",
+      entity_status_date: (e as any).entity_status_date ?? "",
+      related_entities: (e as any).related_entities ?? [],
       comments: e.comments ?? "",
     });
     setExpandedId(null);
@@ -153,6 +174,9 @@ export function EntitiesSection({
       role: editingEntity.role as EntityForm["role"],
       is_suspected: editingEntity.is_suspected,
       email: editingEntity.email || undefined,
+      entity_status: (editingEntity.entity_status || undefined) as EntityStatus | undefined,
+      entity_status_date: editingEntity.entity_status_date || undefined,
+      related_entities: editingEntity.related_entities.length ? editingEntity.related_entities : undefined,
     } as Parameters<typeof saveEntity>[1]);
     setSaving(false);
 
@@ -273,6 +297,18 @@ export function EntitiesSection({
               placeholder="contact@company.com"
               type="email"
             />
+            <SelectField
+              label="Entity Status (optional)"
+              value={editingEntity.entity_status}
+              onChange={(v) => setEditingEntity({ ...editingEntity, entity_status: v as EntityStatus | "" })}
+              options={ENTITY_STATUS_OPTIONS}
+            />
+            <Field
+              label="Entity Status Date (optional)"
+              value={editingEntity.entity_status_date}
+              onChange={(v) => setEditingEntity({ ...editingEntity, entity_status_date: v })}
+              type="date"
+            />
           </div>
           <div className="mt-3">
             <Field
@@ -296,6 +332,32 @@ export function EntitiesSection({
               Suspected entity (SAR)
             </label>
           </div>
+
+          {/* Related Entities */}
+          <EntityInlineList
+            title="Related Entities"
+            items={editingEntity.related_entities.map((re) =>
+              [re.name, re.share_percentage != null ? `${re.share_percentage}%` : "", re.comments]
+                .filter(Boolean).join(" — ")
+            )}
+            onRemove={(i) =>
+              setEditingEntity({
+                ...editingEntity,
+                related_entities: editingEntity.related_entities.filter((_, idx) => idx !== i),
+              })
+            }
+            addForm={
+              <RelatedEntityAddForm
+                onAdd={(re) =>
+                  setEditingEntity({
+                    ...editingEntity,
+                    related_entities: [...editingEntity.related_entities, re],
+                  })
+                }
+              />
+            }
+          />
+
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
             {nameWarning && (
               <div className="rounded-lg bg-amber-bg border border-amber-border px-3 py-2 text-[12px] text-text-secondary col-span-full">
@@ -670,6 +732,91 @@ function SelectField({
       >
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+    </div>
+  );
+}
+
+function EntityInlineList({
+  title,
+  items,
+  onRemove,
+  addForm,
+}: {
+  title: string;
+  items: string[];
+  onRemove: (i: number) => void;
+  addForm: React.ReactNode;
+}) {
+  const [adding, setAdding] = useState(false);
+  return (
+    <div className="mt-4 border-t border-border pt-3">
+      <div className="flex items-center justify-between mb-2">
+        <h5 className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider">{title}</h5>
+        {!adding && (
+          <button onClick={() => setAdding(true)} className="text-[11.5px] font-medium text-accent hover:underline">
+            + Add
+          </button>
+        )}
+      </div>
+      {items.length === 0 && !adding && (
+        <p className="text-[12px] text-text-tertiary">None added</p>
+      )}
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center justify-between py-1 text-[12.5px]">
+          <span className="text-text">{item}</span>
+          <button onClick={() => onRemove(i)} className="text-[11px] text-red hover:underline shrink-0 ml-2">
+            Remove
+          </button>
+        </div>
+      ))}
+      {adding && (
+        <div className="mt-2">
+          {React.cloneElement(addForm as React.ReactElement<{ onDone: () => void }>, {
+            onDone: () => setAdding(false),
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RelatedEntityAddForm({
+  onAdd,
+  onDone,
+}: {
+  onAdd: (re: RelatedEntityItem) => void;
+  onDone?: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [shareStr, setShareStr] = useState("");
+  const [comments, setComments] = useState("");
+  return (
+    <div className="border border-border rounded-lg p-3 space-y-2 bg-surface">
+      <Field label="Entity Name *" value={name} onChange={setName} placeholder="Legal entity name" small />
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Share % (optional)" value={shareStr} onChange={setShareStr} placeholder="e.g. 50" small />
+        <Field label="Comments (optional)" value={comments} onChange={setComments} placeholder="e.g. parent company" small />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={() => {
+            if (!name) return;
+            const sp = shareStr ? parseFloat(shareStr) : undefined;
+            onAdd({ name, share_percentage: isNaN(sp as number) ? undefined : sp, comments: comments || undefined });
+            onDone?.();
+          }}
+          disabled={!name}
+          className="px-3 py-1.5 text-[12px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover disabled:opacity-60"
+        >
+          Add
+        </button>
+        <button
+          onClick={onDone}
+          className="px-3 py-1.5 text-[12px] font-medium border border-border rounded-full hover:bg-surface-alt"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

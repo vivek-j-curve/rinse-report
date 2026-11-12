@@ -11,6 +11,7 @@ import type {
   GoAMLPersonIdentification,
   GoAMLActivity,
   TransactionStatus,
+  EntityStatus,
 } from "./types";
 
 interface DbReport {
@@ -55,11 +56,14 @@ interface DbPerson {
   gender: string | null;
   birthdate: string | null;
   birth_place: string | null;
-  mothers_name: string | null;
   nationality: string | null;
   residence: string | null;
   occupation: string | null;
+  tax_number: string | null;
   source_of_wealth: string | null;
+  social_media: Array<{ platform: string; user_name: string; comments?: string }> | null;
+  related_persons: Array<{ first_name: string; last_name: string; comments?: string }> | null;
+  additional_information: Array<{ info_subject: string; info_text?: string }> | null;
   comments: string | null;
   is_my_client: boolean;
   is_suspected?: boolean;
@@ -74,6 +78,9 @@ interface DbEntity {
   business_type: string | null;
   incorporation_country: string | null;
   incorporation_date: string | null;
+  entity_status: string | null;
+  entity_status_date: string | null;
+  related_entities: Array<{ name: string; share_percentage?: number; comments?: string }> | null;
   comments: string | null;
   is_my_client: boolean;
   is_suspected?: boolean;
@@ -397,7 +404,7 @@ function mapPerson(
     identifications: DbIdentification[];
   }
 ): GoAMLPerson {
-  return {
+  const goamlPerson: GoAMLPerson = {
     gender: person.gender ?? undefined,
     title: person.title ?? undefined,
     first_name: person.first_name,
@@ -405,10 +412,10 @@ function mapPerson(
     last_name: person.last_name,
     birthdate: toDateTime(person.birthdate),
     birth_place: person.birth_place ?? undefined,
-    mothers_name: person.mothers_name ?? undefined,
     nationality1: toCountryCode(person.nationality),
     residence: toCountryCode(person.residence),
     occupation: person.occupation ?? undefined,
+    tax_number: person.tax_number ?? undefined,
     source_of_wealth: person.source_of_wealth ?? undefined,
     email: (person as any).email ?? undefined,
     comments: person.comments ?? undefined,
@@ -417,12 +424,40 @@ function mapPerson(
     addresses: person.addresses.map(mapAddress),
     identifications: person.identifications.map(mapIdentification),
   };
+
+  if (person.social_media?.length) {
+    goamlPerson.social_media = person.social_media;
+  }
+  if (person.related_persons?.length) {
+    goamlPerson.related_persons = person.related_persons.map((rp) => ({
+      person: {
+        first_name: rp.first_name,
+        last_name: rp.last_name,
+        is_my_client: false,
+      },
+      comments: rp.comments,
+    }));
+  }
+  if (person.additional_information?.length) {
+    goamlPerson.additional_information = person.additional_information;
+  }
+
+  return goamlPerson;
 }
+
+const ENTITY_STATUS_MAP: Record<string, EntityStatus> = {
+  active: "A",
+  dissolved: "D",
+  inactive: "I",
+  "in liquidation": "IL",
+  liquidation: "IL",
+  unknown: "-",
+};
 
 function mapEntity(
   entity: DbEntity & { addresses: DbAddress[]; phones: DbPhone[] }
 ): GoAMLEntity {
-  return {
+  const goamlEntity: GoAMLEntity = {
     name: entity.name,
     commercial_name: entity.commercial_name ?? undefined,
     incorporation_legal_form: entity.incorporation_legal_form
@@ -438,6 +473,23 @@ function mapEntity(
     phones: entity.phones.map(mapPhone),
     addresses: entity.addresses.map(mapAddress),
   };
+
+  if (entity.entity_status) {
+    goamlEntity.entity_status = ENTITY_STATUS_MAP[entity.entity_status.toLowerCase()] ?? "-";
+    if (entity.entity_status_date) {
+      goamlEntity.entity_status_date = toDateTime(entity.entity_status_date);
+    }
+  }
+
+  if (entity.related_entities?.length) {
+    goamlEntity.related_entities = entity.related_entities.map((re) => ({
+      entity: { name: re.name, is_my_client: false },
+      share_percentage: re.share_percentage,
+      comments: re.comments,
+    }));
+  }
+
+  return goamlEntity;
 }
 
 function mapAccount(account: DbAccountFull): GoAMLAccount {

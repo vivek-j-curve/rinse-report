@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Plus, CheckCircle, AlertTriangle } from "@/components/ui/icons";
 import {
   savePerson,
@@ -28,7 +28,6 @@ type PersonRecord = Record<string, unknown> & {
   nationality: string | null;
   residence: string | null;
   occupation: string | null;
-  mothers_name: string | null;
   source_of_wealth: string | null;
   is_my_client: boolean;
   role: string;
@@ -72,6 +71,10 @@ type IdRecord = {
   issue_country: string | null;
 };
 
+type SocialMediaItem = { platform: string; user_name: string; comments?: string };
+type RelatedPersonItem = { first_name: string; last_name: string; comments?: string };
+type AdditionalInfoItem = { info_subject: string; info_text?: string };
+
 type PersonForm = {
   id?: string;
   first_name: string;
@@ -84,8 +87,11 @@ type PersonForm = {
   nationality: string;
   residence: string;
   occupation: string;
-  mothers_name: string;
+  tax_number: string;
   source_of_wealth: string;
+  social_media: SocialMediaItem[];
+  related_persons: RelatedPersonItem[];
+  additional_information: AdditionalInfoItem[];
   is_my_client: boolean;
   is_suspected: boolean;
   email: string;
@@ -105,8 +111,11 @@ const EMPTY_PERSON: PersonForm = {
   nationality: "",
   residence: "",
   occupation: "",
-  mothers_name: "",
+  tax_number: "",
   source_of_wealth: "",
+  social_media: [],
+  related_persons: [],
+  additional_information: [],
   is_my_client: true,
   is_suspected: false,
   email: "",
@@ -167,8 +176,11 @@ export function PersonsSection({
       nationality: p.nationality ?? "",
       residence: p.residence ?? "",
       occupation: p.occupation ?? "",
-      mothers_name: p.mothers_name ?? "",
+      tax_number: (p as any).tax_number ?? "",
       source_of_wealth: p.source_of_wealth ?? "",
+      social_media: (p as any).social_media ?? [],
+      related_persons: (p as any).related_persons ?? [],
+      additional_information: (p as any).additional_information ?? [],
       is_my_client: p.is_my_client,
       is_suspected: (p as any).is_suspected ?? false,
       email: (p as any).email ?? "",
@@ -179,11 +191,11 @@ export function PersonsSection({
     setExpandedId(null);
   }
 
-  async function handleSave() {
-    if (!editingPerson) return;
+  async function handleSave(): Promise<string | null> {
+    if (!editingPerson) return null;
     if (!editingPerson.first_name || !editingPerson.last_name) {
       setError("First name and last name are required");
-      return;
+      return null;
     }
 
     setSaving(true);
@@ -195,17 +207,21 @@ export function PersonsSection({
       entity_id: editingPerson.entity_id || undefined,
       is_suspected: editingPerson.is_suspected,
       email: editingPerson.email || undefined,
+      tax_number: editingPerson.tax_number || undefined,
+      social_media: editingPerson.social_media.length ? editingPerson.social_media : undefined,
+      related_persons: editingPerson.related_persons.length ? editingPerson.related_persons : undefined,
+      additional_information: editingPerson.additional_information.length ? editingPerson.additional_information : undefined,
     } as Parameters<typeof savePerson>[1]);
     setSaving(false);
 
     if ("error" in res && res.error) {
       setError(res.error);
-      return;
+      return null;
     }
-    // Keep form open so user can add sub-records (address, phone, ID) in the same form
     const returnedId = "id" in res ? res.id : editingPerson.id;
     setEditingPerson((prev) => (prev ? { ...prev, id: returnedId } : null));
     onUpdate();
+    return returnedId ?? null;
   }
 
   async function handleDelete(personId: string) {
@@ -360,11 +376,12 @@ export function PersonsSection({
               placeholder="e.g. Employment income"
             />
             <Field
-              label="Mother's Name (optional)"
-              value={editingPerson.mothers_name}
+              label="Tax Number / IRD (optional)"
+              value={editingPerson.tax_number}
               onChange={(v) =>
-                setEditingPerson({ ...editingPerson, mothers_name: v })
+                setEditingPerson({ ...editingPerson, tax_number: v })
               }
+              placeholder="e.g. 123-456-789"
             />
             <Field
               label="Email (optional)"
@@ -400,6 +417,105 @@ export function PersonsSection({
               Suspected person (SAR)
             </label>
           </div>
+
+          {/* Social Media */}
+          <InlineList
+            title="Social Media"
+            items={editingPerson.social_media.map((sm) => `${sm.platform}: ${sm.user_name}`)}
+            onRemove={(i) =>
+              setEditingPerson({
+                ...editingPerson,
+                social_media: editingPerson.social_media.filter((_, idx) => idx !== i),
+              })
+            }
+            addForm={
+              <SocialMediaAddForm
+                onAdd={(sm) =>
+                  setEditingPerson({
+                    ...editingPerson,
+                    social_media: [...editingPerson.social_media, sm],
+                  })
+                }
+              />
+            }
+          />
+
+          {/* Additional Information */}
+          <InlineList
+            title="Additional Information"
+            items={editingPerson.additional_information.map((ai) =>
+              ai.info_text ? `${ai.info_subject}: ${ai.info_text}` : ai.info_subject
+            )}
+            onRemove={(i) =>
+              setEditingPerson({
+                ...editingPerson,
+                additional_information: editingPerson.additional_information.filter((_, idx) => idx !== i),
+              })
+            }
+            addForm={
+              <AdditionalInfoAddForm
+                onAdd={(ai) =>
+                  setEditingPerson({
+                    ...editingPerson,
+                    additional_information: [...editingPerson.additional_information, ai],
+                  })
+                }
+              />
+            }
+          />
+
+          {/* Related Persons */}
+          <InlineList
+            title="Related Persons"
+            items={editingPerson.related_persons.map((rp) =>
+              `${rp.first_name} ${rp.last_name}${rp.comments ? ` — ${rp.comments}` : ""}`
+            )}
+            onRemove={(i) =>
+              setEditingPerson({
+                ...editingPerson,
+                related_persons: editingPerson.related_persons.filter((_, idx) => idx !== i),
+              })
+            }
+            addForm={
+              <RelatedPersonAddForm
+                onAdd={(rp) =>
+                  setEditingPerson({
+                    ...editingPerson,
+                    related_persons: [...editingPerson.related_persons, rp],
+                  })
+                }
+              />
+            }
+          />
+
+          {/* Sub-records — always visible; saveFirst auto-saves the person if not yet saved */}
+          <div className="space-y-5 border-t border-border mt-4 pt-5">
+            <SubRecords
+              title="Addresses"
+              items={editingPersonRecord?.addresses ?? []}
+              personId={editingPerson.id}
+              type="address"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+            <SubRecords
+              title="Phone Numbers"
+              items={editingPersonRecord?.phones ?? []}
+              personId={editingPerson.id}
+              type="phone"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+            <SubRecords
+              title="Identification Documents"
+              items={editingPersonRecord?.person_identifications ?? []}
+              personId={editingPerson.id}
+              type="identification"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+          </div>
+
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
             <button
               onClick={handleSave}
@@ -418,36 +534,6 @@ export function PersonsSection({
               {editingPerson.id ? "Done" : "Cancel"}
             </button>
           </div>
-
-          {/* Sub-records — shown once the person has been saved and has an ID */}
-          {editingPerson.id && (
-            <div className="border-t border-border mt-6 pt-5 space-y-5">
-              <p className="text-[11.5px] text-text-tertiary -mb-1">
-                Save details above first, then add address, contact and identification below.
-              </p>
-              <SubRecords
-                title="Addresses"
-                items={editingPersonRecord?.addresses ?? []}
-                personId={editingPerson.id}
-                type="address"
-                onUpdate={onUpdate}
-              />
-              <SubRecords
-                title="Phone Numbers"
-                items={editingPersonRecord?.phones ?? []}
-                personId={editingPerson.id}
-                type="phone"
-                onUpdate={onUpdate}
-              />
-              <SubRecords
-                title="Identification Documents"
-                items={editingPersonRecord?.person_identifications ?? []}
-                personId={editingPerson.id}
-                type="identification"
-                onUpdate={onUpdate}
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -602,16 +688,37 @@ function SubRecords({
   items,
   personId,
   type,
+  saveFirst,
   onUpdate,
 }: {
   title: string;
   items: AddressRecord[] | PhoneRecord[] | IdRecord[];
-  personId: string;
+  personId: string | undefined;
   type: "address" | "phone" | "identification";
+  saveFirst: () => Promise<string | null>;
   onUpdate: () => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resolvedPersonId, setResolvedPersonId] = useState<string | undefined>(personId);
+
+  // Keep resolvedPersonId in sync when parent saves and passes down a real id
+  React.useEffect(() => {
+    if (personId) setResolvedPersonId(personId);
+  }, [personId]);
+
+  async function openAdd() {
+    if (resolvedPersonId) {
+      setAdding(true);
+      return;
+    }
+    // Person not saved yet — save first, then open
+    const id = await saveFirst();
+    if (id) {
+      setResolvedPersonId(id);
+      setAdding(true);
+    }
+  }
   const [idError, setIdError] = useState<string | null>(null);
 
   // Address form state
@@ -654,8 +761,9 @@ function SubRecords({
   }
 
   async function handleSaveAddress() {
+    if (!resolvedPersonId) return;
     setSaving(true);
-    await saveAddress(personId, {
+    await saveAddress(resolvedPersonId, {
       address_type: addrType as "residential" | "business" | "registered" | "mailing",
       address_line: addrLine,
       city: addrCity,
@@ -668,9 +776,9 @@ function SubRecords({
   }
 
   async function handleSavePhone() {
-    if (!phoneNumber) return;
+    if (!phoneNumber || !resolvedPersonId) return;
     setSaving(true);
-    await savePhone(personId, {
+    await savePhone(resolvedPersonId, {
       phone_type: phoneType as "mobile" | "landline" | "fax",
       country_prefix: phonePrefix,
       number: phoneNumber,
@@ -681,7 +789,7 @@ function SubRecords({
   }
 
   async function handleSaveId() {
-    if (!idNumber) return;
+    if (!idNumber || !resolvedPersonId) return;
     if (idType === "drivers_licence" && idCountry.toUpperCase() === "NZ") {
       if (!/^[A-Za-z]{2}\d{6}$/.test(idNumber)) {
         setIdError("NZ Driver Licence must be 2 letters followed by 6 digits (e.g. LF123456)");
@@ -690,7 +798,7 @@ function SubRecords({
     }
     setIdError(null);
     setSaving(true);
-    await saveIdentification(personId, {
+    await saveIdentification(resolvedPersonId, {
       type: idType as "drivers_licence" | "passport" | "national_id" | "birth_certificate" | "other",
       number: idNumber,
       issue_date: idIssueDate || undefined,
@@ -718,7 +826,7 @@ function SubRecords({
         </h5>
         {!adding && (
           <button
-            onClick={() => setAdding(true)}
+            onClick={openAdd}
             className="text-[11.5px] font-medium text-accent hover:underline"
           >
             + Add
@@ -1046,6 +1154,174 @@ function SelectField({
         options={options}
         small={small}
       />
+    </div>
+  );
+}
+
+function InlineList({
+  title,
+  items,
+  onRemove,
+  addForm,
+}: {
+  title: string;
+  items: string[];
+  onRemove: (i: number) => void;
+  addForm: React.ReactNode;
+}) {
+  const [adding, setAdding] = useState(false);
+  return (
+    <div className="mt-4 border-t border-border pt-3">
+      <div className="flex items-center justify-between mb-2">
+        <h5 className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider">
+          {title}
+        </h5>
+        {!adding && (
+          <button
+            onClick={() => setAdding(true)}
+            className="text-[11.5px] font-medium text-accent hover:underline"
+          >
+            + Add
+          </button>
+        )}
+      </div>
+      {items.length === 0 && !adding && (
+        <p className="text-[12px] text-text-tertiary">None added</p>
+      )}
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center justify-between py-1 text-[12.5px]">
+          <span className="text-text">{item}</span>
+          <button
+            onClick={() => onRemove(i)}
+            className="text-[11px] text-red hover:underline shrink-0 ml-2"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      {adding && (
+        <div className="mt-2">
+          {React.cloneElement(addForm as React.ReactElement<{ onDone: () => void }>, {
+            onDone: () => setAdding(false),
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SocialMediaAddForm({
+  onAdd,
+  onDone,
+}: {
+  onAdd: (sm: SocialMediaItem) => void;
+  onDone?: () => void;
+}) {
+  const [platform, setPlatform] = useState("");
+  const [userName, setUserName] = useState("");
+  const [comments, setComments] = useState("");
+  return (
+    <div className="border border-border rounded-lg p-3 space-y-2 bg-surface">
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Platform *" value={platform} onChange={setPlatform} placeholder="e.g. Facebook" small />
+        <Field label="Username *" value={userName} onChange={setUserName} placeholder="@username" small />
+      </div>
+      <Field label="Comments (optional)" value={comments} onChange={setComments} placeholder="" small />
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={() => {
+            if (!platform || !userName) return;
+            onAdd({ platform, user_name: userName, comments: comments || undefined });
+            onDone?.();
+          }}
+          disabled={!platform || !userName}
+          className="px-3 py-1.5 text-[12px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover disabled:opacity-60"
+        >
+          Add
+        </button>
+        <button
+          onClick={onDone}
+          className="px-3 py-1.5 text-[12px] font-medium border border-border rounded-full hover:bg-surface-alt"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdditionalInfoAddForm({
+  onAdd,
+  onDone,
+}: {
+  onAdd: (ai: AdditionalInfoItem) => void;
+  onDone?: () => void;
+}) {
+  const [subject, setSubject] = useState("");
+  const [text, setText] = useState("");
+  return (
+    <div className="border border-border rounded-lg p-3 space-y-2 bg-surface">
+      <Field label="Subject *" value={subject} onChange={setSubject} placeholder="e.g. Source of funds detail" small />
+      <Field label="Detail (optional)" value={text} onChange={setText} placeholder="" small />
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={() => {
+            if (!subject) return;
+            onAdd({ info_subject: subject, info_text: text || undefined });
+            onDone?.();
+          }}
+          disabled={!subject}
+          className="px-3 py-1.5 text-[12px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover disabled:opacity-60"
+        >
+          Add
+        </button>
+        <button
+          onClick={onDone}
+          className="px-3 py-1.5 text-[12px] font-medium border border-border rounded-full hover:bg-surface-alt"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RelatedPersonAddForm({
+  onAdd,
+  onDone,
+}: {
+  onAdd: (rp: RelatedPersonItem) => void;
+  onDone?: () => void;
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [comments, setComments] = useState("");
+  return (
+    <div className="border border-border rounded-lg p-3 space-y-2 bg-surface">
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="First Name *" value={firstName} onChange={setFirstName} placeholder="Given names" small />
+        <Field label="Last Name *" value={lastName} onChange={setLastName} placeholder="Family name" small />
+      </div>
+      <Field label="Relationship / Comments (optional)" value={comments} onChange={setComments} placeholder="e.g. spouse" small />
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={() => {
+            if (!firstName || !lastName) return;
+            onAdd({ first_name: firstName, last_name: lastName, comments: comments || undefined });
+            onDone?.();
+          }}
+          disabled={!firstName || !lastName}
+          className="px-3 py-1.5 text-[12px] font-semibold bg-accent text-white rounded-full hover:bg-accent-hover disabled:opacity-60"
+        >
+          Add
+        </button>
+        <button
+          onClick={onDone}
+          className="px-3 py-1.5 text-[12px] font-medium border border-border rounded-full hover:bg-surface-alt"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

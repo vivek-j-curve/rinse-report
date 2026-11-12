@@ -232,6 +232,18 @@ function getXmlWarnings(data: ReportData): string[] {
     }
   }
 
+  // Soft warnings: my_client persons should have address and ID document
+  for (const person of persons as unknown as (PersonWithDetails & { role?: string })[]) {
+    if (person.role !== "my_client") continue;
+    const name = `${person.first_name} ${person.last_name}`;
+    if ((person.addresses?.length ?? 0) === 0) {
+      warnings.push(`Your client ${name} has no address — FIU expects an address for your own client.`);
+    }
+    if ((person.person_identifications?.length ?? 0) === 0) {
+      warnings.push(`Your client ${name} has no identification document — FIU expects at least one ID for your own client.`);
+    }
+  }
+
   // Account-level checks
   for (const acc of accounts as { account_number?: string; institution_code?: string | null; institution_code_type?: string | null }[]) {
     const hasCode = !!acc.institution_code;

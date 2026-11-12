@@ -49,6 +49,7 @@ type EntityForm = {
   name: string;
   commercial_name: string;
   is_my_client: boolean;
+  is_suspected: boolean;
   role: string;
   business_type: string;
   incorporation_date: string;
@@ -62,6 +63,7 @@ const EMPTY_ENTITY: EntityForm = {
   name: "",
   commercial_name: "",
   is_my_client: false,
+  is_suspected: false,
   role: "counterparty",
   business_type: "",
   incorporation_date: "",
@@ -115,6 +117,7 @@ export function EntitiesSection({
       name: e.name,
       commercial_name: e.commercial_name ?? "",
       is_my_client: e.is_my_client,
+      is_suspected: (e as any).is_suspected ?? false,
       role: e.role,
       business_type: e.business_type ?? "",
       incorporation_date: e.incorporation_date ?? "",
@@ -141,6 +144,7 @@ export function EntitiesSection({
         | "limited" | "partnership" | "sole_trader" | "trust" | "other"
         | undefined,
       role: editingEntity.role as EntityForm["role"],
+      is_suspected: editingEntity.is_suspected,
     } as Parameters<typeof saveEntity>[1]);
     setSaving(false);
 
@@ -264,6 +268,19 @@ export function EntitiesSection({
               multiline
               placeholder="Any additional notes..."
             />
+          </div>
+          <div className="mt-3">
+            <label className="flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                checked={editingEntity.is_suspected}
+                onChange={(e) =>
+                  setEditingEntity({ ...editingEntity, is_suspected: e.target.checked })
+                }
+                className="rounded border-border"
+              />
+              Suspected entity (SAR)
+            </label>
           </div>
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
             {nameWarning && (

@@ -107,6 +107,9 @@ function writeTransaction(
   node.ele("date_transaction").txt(tx.date_transaction);
   if (tx.teller) node.ele("teller").txt(tx.teller);
   if (tx.authorized) node.ele("authorized").txt(tx.authorized);
+  if (tx.transaction_is_suspicious) {
+    node.ele("transaction_is_suspicious").txt("true");
+  }
   if (tx.late_deposit !== undefined) {
     node.ele("late_deposit").txt(tx.late_deposit ? "true" : "false");
     if (tx.date_posting) node.ele("date_posting").txt(tx.date_posting);
@@ -158,6 +161,13 @@ function writeTransactionSide(
 
   const countryField = direction === "from" ? "from_country" : "to_country";
   const countryValue = side.from_country ?? side.to_country;
+
+  if (direction === "from" && side.conductor_is_suspected) {
+    node.ele("conductor_is_suspected").txt("true");
+  }
+  if (side.is_suspected) {
+    node.ele(direction === "from" ? "from_is_suspected" : "to_is_suspected").txt("true");
+  }
 
   if (side.account) {
     const accountTag = side.is_my_client
@@ -422,6 +432,9 @@ function writeActivity(
       writeEntity(partyNode.ele("entity_my_client"), party.entity_my_client, true);
     } else if (party.entity) {
       writeEntity(partyNode.ele("entity"), party.entity, false);
+    }
+    if (party.is_suspected) {
+      partyNode.ele("is_suspected").txt("true");
     }
   }
 }

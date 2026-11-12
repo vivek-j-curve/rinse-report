@@ -87,6 +87,7 @@ type PersonForm = {
   mothers_name: string;
   source_of_wealth: string;
   is_my_client: boolean;
+  is_suspected: boolean;
   role: string;
   entity_id: string;
   comments: string;
@@ -106,6 +107,7 @@ const EMPTY_PERSON: PersonForm = {
   mothers_name: "",
   source_of_wealth: "",
   is_my_client: true,
+  is_suspected: false,
   role: "my_client",
   entity_id: "",
   comments: "",
@@ -166,6 +168,7 @@ export function PersonsSection({
       mothers_name: p.mothers_name ?? "",
       source_of_wealth: p.source_of_wealth ?? "",
       is_my_client: p.is_my_client,
+      is_suspected: (p as any).is_suspected ?? false,
       role: p.role,
       entity_id: p.entity_id ?? "",
       comments: p.comments ?? "",
@@ -187,6 +190,7 @@ export function PersonsSection({
       gender: (editingPerson.gender || undefined) as "M" | "F" | "U" | undefined,
       role: editingPerson.role as PersonForm["role"],
       entity_id: editingPerson.entity_id || undefined,
+      is_suspected: editingPerson.is_suspected,
     } as Parameters<typeof savePerson>[1]);
     setSaving(false);
 
@@ -369,6 +373,19 @@ export function PersonsSection({
               multiline
               placeholder="Any additional notes about this person..."
             />
+          </div>
+          <div className="mt-3">
+            <label className="flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                checked={editingPerson.is_suspected}
+                onChange={(e) =>
+                  setEditingPerson({ ...editingPerson, is_suspected: e.target.checked })
+                }
+                className="rounded border-border"
+              />
+              Suspected person (SAR)
+            </label>
           </div>
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
             <button

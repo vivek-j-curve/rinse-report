@@ -47,6 +47,7 @@ export interface GoAMLTransaction {
   date_transaction: string;
   teller?: string;
   authorized?: string;
+  transaction_is_suspicious?: boolean;
   late_deposit?: boolean;
   date_posting?: string;
   transmode_code: string;
@@ -65,6 +66,8 @@ export interface GoAMLTransactionSide {
   foreign_currency?: GoAMLForeignCurrency;
   from_country?: string;
   to_country?: string;
+  conductor_is_suspected?: boolean;
+  is_suspected?: boolean;
   account?: GoAMLAccount;
   person?: GoAMLPerson;
   entity?: GoAMLEntity;
@@ -194,4 +197,5 @@ export interface GoAMLReportParty {
   entity_my_client?: GoAMLEntity;
   account?: GoAMLAccount;
   account_my_client?: GoAMLAccount;
+  is_suspected?: boolean;
 }

@@ -225,6 +225,7 @@ export async function savePerson(
     mothers_name?: string;
     source_of_wealth?: string;
     is_my_client: boolean;
+    is_suspected?: boolean;
     role: "my_client" | "counterparty" | "conductor" | "signatory" | "director" | "beneficiary";
     entity_id?: string;
     comments?: string;
@@ -250,6 +251,7 @@ export async function savePerson(
     mothers_name: person.mothers_name || null,
     source_of_wealth: person.source_of_wealth || null,
     is_my_client: person.is_my_client,
+    is_suspected: person.is_suspected ?? false,
     role: person.role,
     entity_id: person.entity_id || null,
     comments: person.comments || null,
@@ -503,6 +505,7 @@ export async function saveTransaction(
     amount_foreign?: number;
     currency_code_foreign?: string;
     late_deposit?: boolean;
+    is_suspicious?: boolean;
     goods_description?: string;
     comments?: string;
   }
@@ -525,6 +528,7 @@ export async function saveTransaction(
     amount_foreign: transaction.amount_foreign ?? null,
     currency_code_foreign: transaction.currency_code_foreign || null,
     late_deposit: transaction.late_deposit ?? false,
+    is_suspicious: transaction.is_suspicious ?? false,
     goods_description: transaction.goods_description || null,
     comments: transaction.comments || null,
   };
@@ -532,7 +536,8 @@ export async function saveTransaction(
   if (transaction.id) {
     const { error } = await supabase
       .from("report_transactions")
-      .update(row)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(row as any)
       .eq("id", transaction.id)
       .eq("organisation_id", profile.organisation_id);
     if (error) return { error: error.message };
@@ -542,7 +547,8 @@ export async function saveTransaction(
 
   const { data, error } = await supabase
     .from("report_transactions")
-    .insert(row)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(row as any)
     .select("id")
     .single();
   if (error) return { error: error.message };
@@ -583,6 +589,7 @@ export async function saveTransactionParty(
     person_id?: string;
     entity_id?: string;
     account_id?: string;
+    is_suspected?: boolean;
   }
 ) {
   const ctx = await getAuthContext();
@@ -596,12 +603,14 @@ export async function saveTransactionParty(
     person_id: party.person_id || null,
     entity_id: party.entity_id || null,
     account_id: party.account_id || null,
+    is_suspected: party.is_suspected ?? false,
   };
 
   if (party.id) {
     const { error } = await supabase
       .from("transaction_parties")
-      .update(row)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(row as any)
       .eq("id", party.id);
     if (error) return { error: error.message };
     return { success: true, id: party.id };
@@ -609,7 +618,8 @@ export async function saveTransactionParty(
 
   const { data, error } = await supabase
     .from("transaction_parties")
-    .insert(row)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(row as any)
     .select("id")
     .single();
   if (error) return { error: error.message };
@@ -724,6 +734,7 @@ export async function saveEntity(
     name: string;
     commercial_name?: string;
     is_my_client: boolean;
+    is_suspected?: boolean;
     role: "my_client" | "counterparty" | "conductor" | "signatory" | "director" | "beneficiary";
     business_type?: string;
     incorporation_date?: string;
@@ -743,6 +754,7 @@ export async function saveEntity(
     name: entity.name,
     commercial_name: entity.commercial_name || null,
     is_my_client: entity.is_my_client,
+    is_suspected: entity.is_suspected ?? false,
     role: entity.role,
     business_type: entity.business_type || null,
     incorporation_date: entity.incorporation_date || null,
@@ -757,7 +769,8 @@ export async function saveEntity(
   if (entity.id) {
     const { error } = await supabase
       .from("report_entities")
-      .update(row)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(row as any)
       .eq("id", entity.id)
       .eq("organisation_id", profile.organisation_id);
     if (error) return { error: error.message };
@@ -767,7 +780,8 @@ export async function saveEntity(
 
   const { data, error } = await supabase
     .from("report_entities")
-    .insert(row)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(row as any)
     .select("id")
     .single();
   if (error) return { error: error.message };
@@ -937,6 +951,7 @@ export async function generateReportXml(reportId: string) {
           person_id: string | null;
           entity_id: string | null;
           account_id: string | null;
+          is_suspected?: boolean;
         }) => {
           const matchedPerson = tp.person_id
             ? persons.find((p) => p.id === tp.person_id) ?? null
@@ -947,6 +962,7 @@ export async function generateReportXml(reportId: string) {
           return {
             direction: tp.direction,
             party_type: tp.party_type,
+            is_suspected: tp.is_suspected ?? false,
             person: matchedPerson
               ? {
                   ...matchedPerson,

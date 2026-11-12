@@ -40,6 +40,7 @@ interface DbTransaction {
   currency_code_local: string;
   currency_code_foreign: string | null;
   late_deposit: boolean;
+  is_suspicious?: boolean;
   comments: string | null;
   goods_description: string | null;
 }
@@ -59,6 +60,7 @@ interface DbPerson {
   source_of_wealth: string | null;
   comments: string | null;
   is_my_client: boolean;
+  is_suspected?: boolean;
   role: string;
 }
 
@@ -72,6 +74,7 @@ interface DbEntity {
   incorporation_date: string | null;
   comments: string | null;
   is_my_client: boolean;
+  is_suspected?: boolean;
   role: string;
 }
 
@@ -140,6 +143,7 @@ interface DbIdentification {
 interface DbTransactionParty {
   direction: "from" | "to";
   party_type: "person" | "entity" | "account";
+  is_suspected?: boolean;
   person: DbPersonFull | null;
   entity: (DbEntity & { addresses: DbAddress[]; phones: DbPhone[] }) | null;
   account: DbAccountFull | null;
@@ -289,6 +293,7 @@ function mapTransaction(
     transmode_code: tx.transmode_code,
     transmode_comment: tx.transmode_comment ?? undefined,
     amount_local: tx.amount_local,
+    transaction_is_suspicious: tx.is_suspicious || undefined,
     late_deposit: tx.late_deposit || undefined,
     comments: tx.comments ?? undefined,
   };
@@ -352,6 +357,10 @@ function mapTransactionParty(
     side.is_my_client = party.entity.is_my_client;
   } else {
     return null;
+  }
+
+  if (party.is_suspected) {
+    side.is_suspected = true;
   }
 
   return side;
@@ -485,19 +494,19 @@ function mapActivity(data: ReportData): GoAMLActivity {
   const reportParties: GoAMLActivity["report_parties"] = [];
 
   for (const person of data.persons) {
-    if (person.is_my_client) {
-      reportParties.push({ person_my_client: mapPerson(person) });
-    } else {
-      reportParties.push({ person: mapPerson(person) });
-    }
+    const party: GoAMLActivity["report_parties"][number] = person.is_my_client
+      ? { person_my_client: mapPerson(person) }
+      : { person: mapPerson(person) };
+    if (person.is_suspected) party.is_suspected = true;
+    reportParties.push(party);
   }
 
   for (const entity of data.entities) {
-    if (entity.is_my_client) {
-      reportParties.push({ entity_my_client: mapEntity(entity) });
-    } else {
-      reportParties.push({ entity: mapEntity(entity) });
-    }
+    const party: GoAMLActivity["report_parties"][number] = entity.is_my_client
+      ? { entity_my_client: mapEntity(entity) }
+      : { entity: mapEntity(entity) };
+    if (entity.is_suspected) party.is_suspected = true;
+    reportParties.push(party);
   }
 
   return { report_parties: reportParties };

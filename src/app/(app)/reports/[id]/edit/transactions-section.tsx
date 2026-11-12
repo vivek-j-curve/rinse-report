@@ -38,6 +38,7 @@ type TransactionPartyRecord = {
   person_id: string | null;
   entity_id: string | null;
   account_id: string | null;
+  is_suspected?: boolean;
 };
 
 type TransactionRecord = {
@@ -53,6 +54,7 @@ type TransactionRecord = {
   amount_foreign: number | null;
   currency_code_foreign: string | null;
   late_deposit: boolean;
+  is_suspicious?: boolean;
   comments: string | null;
   transaction_parties: TransactionPartyRecord[];
 };
@@ -83,6 +85,7 @@ type TransactionForm = {
   amount_foreign: string;
   currency_code_foreign: string;
   late_deposit: boolean;
+  is_suspicious: boolean;
   comments: string;
 };
 
@@ -111,6 +114,7 @@ const EMPTY_TX: TransactionForm = {
   amount_foreign: "",
   currency_code_foreign: "",
   late_deposit: false,
+  is_suspicious: false,
   comments: "",
 };
 
@@ -226,6 +230,7 @@ export function TransactionsSection({
       amount_foreign: tx.amount_foreign ? String(tx.amount_foreign) : "",
       currency_code_foreign: tx.currency_code_foreign ?? "",
       late_deposit: tx.late_deposit,
+      is_suspicious: (tx as any).is_suspicious ?? false,
       comments: tx.comments ?? "",
     });
     setExpandedId(null);
@@ -261,6 +266,7 @@ export function TransactionsSection({
         : undefined,
       currency_code_foreign: editing.currency_code_foreign || undefined,
       late_deposit: editing.late_deposit,
+      is_suspicious: editing.is_suspicious,
       comments: editing.comments || undefined,
     });
     setSaving(false);
@@ -447,7 +453,7 @@ export function TransactionsSection({
               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent resize-none"
             />
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-[13px]">
               <input
                 type="checkbox"
@@ -458,6 +464,17 @@ export function TransactionsSection({
                 className="rounded border-border"
               />
               Late deposit
+            </label>
+            <label className="flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                checked={editing.is_suspicious}
+                onChange={(e) =>
+                  setEditing({ ...editing, is_suspicious: e.target.checked })
+                }
+                className="rounded border-border"
+              />
+              Transaction is suspicious
             </label>
           </div>
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
@@ -874,6 +891,26 @@ function PartySlot({
               )}
             </div>
           )}
+          <label className="flex items-center gap-1.5 mt-2 text-[11.5px]">
+            <input
+              type="checkbox"
+              checked={party.is_suspected ?? false}
+              onChange={async (e) => {
+                await saveTransactionParty(txId, {
+                  id: party.id,
+                  direction,
+                  party_type: party.party_type as "person" | "entity" | "account",
+                  person_id: party.person_id ?? undefined,
+                  entity_id: party.entity_id ?? undefined,
+                  account_id: party.account_id ?? undefined,
+                  is_suspected: e.target.checked,
+                });
+                onUpdate();
+              }}
+              className="rounded border-border"
+            />
+            Suspected party
+          </label>
           <button
             onClick={handleRemoveParty}
             disabled={saving}

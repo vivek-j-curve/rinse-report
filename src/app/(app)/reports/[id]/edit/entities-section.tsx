@@ -359,6 +359,25 @@ export function EntitiesSection({
             }
           />
 
+          <div className="border-t border-border mt-4 pt-5 space-y-5">
+            <EntitySubRecords
+              title="Addresses"
+              items={editingEntityRecord?.addresses ?? []}
+              entityId={editingEntity.id}
+              type="address"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+            <EntitySubRecords
+              title="Phone Numbers"
+              items={editingEntityRecord?.phones ?? []}
+              entityId={editingEntity.id}
+              type="phone"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+          </div>
+
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
             {nameWarning && (
               <div className="rounded-lg bg-amber-bg border border-amber-border px-3 py-2 text-[12px] text-text-secondary col-span-full">
@@ -381,25 +400,6 @@ export function EntitiesSection({
             >
               {editingEntity.id ? "Done" : "Cancel"}
             </button>
-          </div>
-
-          <div className="border-t border-border mt-4 pt-5 space-y-5">
-            <EntitySubRecords
-              title="Addresses"
-              items={editingEntityRecord?.addresses ?? []}
-              entityId={editingEntity.id}
-              type="address"
-              saveFirst={handleSave}
-              onUpdate={onUpdate}
-            />
-            <EntitySubRecords
-              title="Phone Numbers"
-              items={editingEntityRecord?.phones ?? []}
-              entityId={editingEntity.id}
-              type="phone"
-              saveFirst={handleSave}
-              onUpdate={onUpdate}
-            />
           </div>
         </div>
         );

@@ -414,7 +414,7 @@ export function PersonsSection({
                 }
                 className="rounded border-border"
               />
-              Suspected person (SAR)
+              Flag as suspected party
             </label>
           </div>
 

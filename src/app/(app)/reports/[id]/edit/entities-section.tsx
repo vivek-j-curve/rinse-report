@@ -157,11 +157,11 @@ export function EntitiesSection({
     setExpandedId(null);
   }
 
-  async function handleSave() {
-    if (!editingEntity) return;
+  async function handleSave(): Promise<string | null> {
+    if (!editingEntity) return null;
     if (!editingEntity.name) {
       setError("Entity name is required");
-      return;
+      return null;
     }
 
     setSaving(true);
@@ -182,11 +182,12 @@ export function EntitiesSection({
 
     if ("error" in res && res.error) {
       setError(res.error);
-      return;
+      return null;
     }
     const returnedId = "id" in res ? res.id : editingEntity.id;
     setEditingEntity((prev) => (prev ? { ...prev, id: returnedId } : null));
     onUpdate();
+    return returnedId ?? null;
   }
 
   async function handleDelete(entityId: string) {
@@ -329,7 +330,7 @@ export function EntitiesSection({
                 }
                 className="rounded border-border"
               />
-              Suspected entity (SAR)
+              Flag as suspected party
             </label>
           </div>
 
@@ -382,28 +383,24 @@ export function EntitiesSection({
             </button>
           </div>
 
-          {editingEntity.id && (
-            <div className="border-t border-border mt-6 pt-5 space-y-5">
-              <p className="text-[11.5px] text-text-tertiary -mb-1">
-                Save details above first, then add address and phone below.
-              </p>
-              <EntitySubRecords
-                title="Addresses"
-                items={editingEntityRecord?.addresses ?? []}
-                entityId={editingEntity.id}
-                type="address"
-                defaultOpen={(editingEntityRecord?.addresses ?? []).length === 0}
-                onUpdate={onUpdate}
-              />
-              <EntitySubRecords
-                title="Phone Numbers"
-                items={editingEntityRecord?.phones ?? []}
-                entityId={editingEntity.id}
-                type="phone"
-                onUpdate={onUpdate}
-              />
-            </div>
-          )}
+          <div className="border-t border-border mt-4 pt-5 space-y-5">
+            <EntitySubRecords
+              title="Addresses"
+              items={editingEntityRecord?.addresses ?? []}
+              entityId={editingEntity.id}
+              type="address"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+            <EntitySubRecords
+              title="Phone Numbers"
+              items={editingEntityRecord?.phones ?? []}
+              entityId={editingEntity.id}
+              type="phone"
+              saveFirst={handleSave}
+              onUpdate={onUpdate}
+            />
+          </div>
         </div>
         );
       })()}
@@ -523,7 +520,7 @@ function EntityCard({
             items={entity.addresses}
             entityId={entity.id}
             type="address"
-            defaultOpen={entity.addresses.length === 0}
+            saveFirst={async () => entity.id}
             onUpdate={onUpdate}
           />
           <EntitySubRecords
@@ -531,6 +528,7 @@ function EntityCard({
             items={entity.phones}
             entityId={entity.id}
             type="phone"
+            saveFirst={async () => entity.id}
             onUpdate={onUpdate}
           />
         </div>
@@ -544,18 +542,35 @@ function EntitySubRecords({
   items,
   entityId,
   type,
-  defaultOpen = false,
+  saveFirst,
   onUpdate,
 }: {
   title: string;
   items: AddressRecord[] | PhoneRecord[];
-  entityId: string;
+  entityId: string | undefined;
   type: "address" | "phone";
-  defaultOpen?: boolean;
+  saveFirst: () => Promise<string | null>;
   onUpdate: () => void;
 }) {
-  const [adding, setAdding] = useState(defaultOpen);
+  const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resolvedEntityId, setResolvedEntityId] = useState<string | undefined>(entityId);
+
+  React.useEffect(() => {
+    if (entityId) setResolvedEntityId(entityId);
+  }, [entityId]);
+
+  async function openAdd() {
+    if (resolvedEntityId) {
+      setAdding(true);
+      return;
+    }
+    const id = await saveFirst();
+    if (id) {
+      setResolvedEntityId(id);
+      setAdding(true);
+    }
+  }
 
   const [addrType, setAddrType] = useState("business");
   const [addrLine, setAddrLine] = useState("");
@@ -575,6 +590,7 @@ function EntitySubRecords({
   }
 
   async function handleSaveAddress() {
+    if (!resolvedEntityId) return;
     setSaving(true);
     await saveAddress("", {
       address_type: addrType as "residential" | "business" | "registered" | "mailing",
@@ -582,20 +598,20 @@ function EntitySubRecords({
       city: addrCity,
       postcode: addrPostcode,
       country_code: addrCountry,
-    }, entityId);
+    }, resolvedEntityId);
     setSaving(false);
     reset();
     onUpdate();
   }
 
   async function handleSavePhone() {
-    if (!phoneNumber) return;
+    if (!phoneNumber || !resolvedEntityId) return;
     setSaving(true);
     await savePhone("", {
       phone_type: phoneType as "mobile" | "landline" | "fax",
       country_prefix: phonePrefix,
       number: phoneNumber,
-    }, entityId);
+    }, resolvedEntityId);
     setSaving(false);
     reset();
     onUpdate();
@@ -614,7 +630,7 @@ function EntitySubRecords({
           {title}
         </h5>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="text-[11.5px] font-medium text-accent hover:underline">
+          <button onClick={openAdd} className="text-[11.5px] font-medium text-accent hover:underline">
             + Add
           </button>
         )}

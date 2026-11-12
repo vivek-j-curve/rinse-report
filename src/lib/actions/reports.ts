@@ -896,7 +896,7 @@ export async function generateReportXml(reportId: string) {
     return { error: reportResult.error };
   if (!("data" in reportResult) || !reportResult.data)
     return { error: "Report not found" };
-  const { report, persons, entities, transactions, indicators } =
+  const { report, persons, entities, transactions, indicators, accounts } =
     reportResult.data;
 
   const caseData = report.cases as {
@@ -1003,10 +1003,84 @@ export async function generateReportXml(reportId: string) {
       ...e,
       business_type: e.business_type,
     })),
-    accounts: [],
+    accounts: (accounts as Array<{
+      person_id: string | null;
+      entity_id: string | null;
+      institution_name: string;
+      institution_code: string | null;
+      institution_code_type: string | null;
+      branch: string | null;
+      account_number: string;
+      currency_code: string | null;
+      account_type: string | null;
+      balance: number | null;
+      balance_date: string | null;
+      status: string | null;
+      opened_date: string | null;
+      closed_date: string | null;
+      comments: string | null;
+      is_my_client: boolean;
+    }>).map((acct) => {
+      const matchedEntity = acct.entity_id
+        ? entities.find((e) => e.id === acct.entity_id) ?? null
+        : null;
+      const entityPersons = matchedEntity
+        ? persons
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .filter((p: any) => p.entity_id === matchedEntity.id)
+            .map((p) => ({
+              ...p,
+              identifications: (p.person_identifications ?? []).map(
+                (id: { type: string; number: string; issue_date: string | null; expiry_date: string | null; issued_by: string | null; issue_country: string | null; comments: string | null }) => ({
+                  type: id.type,
+                  number: id.number,
+                  issue_date: id.issue_date,
+                  expiry_date: id.expiry_date,
+                  issued_by: id.issued_by,
+                  issue_country: id.issue_country,
+                  comments: id.comments,
+                })
+              ),
+            }))
+        : [];
+      const matchedPerson = acct.person_id
+        ? persons.find((p) => p.id === acct.person_id) ?? null
+        : null;
+      return {
+        ...acct,
+        entity: matchedEntity
+          ? { ...matchedEntity, persons: entityPersons }
+          : null,
+        person: matchedPerson
+          ? {
+              ...matchedPerson,
+              identifications: (matchedPerson.person_identifications ?? []).map(
+                (id: { type: string; number: string; issue_date: string | null; expiry_date: string | null; issued_by: string | null; issue_country: string | null; comments: string | null }) => ({
+                  type: id.type,
+                  number: id.number,
+                  issue_date: id.issue_date,
+                  expiry_date: id.expiry_date,
+                  issued_by: id.issued_by,
+                  issue_country: id.issue_country,
+                  comments: id.comments,
+                })
+              ),
+            }
+          : null,
+      };
+    }),
     indicators,
     reason: reasonData?.reason,
   };
+
+  // Validation: an account with an entity must have at least one person linked to that entity
+  for (const acct of reportData.accounts) {
+    if (acct.entity && acct.entity.persons.length === 0) {
+      return {
+        error: `Account ${acct.account_number} has entity "${acct.entity.name}" but no persons linked to it. Add at least one director or related person to the entity before generating XML.`,
+      };
+    }
+  }
 
   const goamlReport = mapReportDataToGoAML(reportData);
   const xmlString = buildGoAMLXml(goamlReport);

@@ -92,6 +92,23 @@ interface DbAccount {
   is_my_client: boolean;
 }
 
+type DbPersonFull = DbPerson & {
+  addresses: DbAddress[];
+  phones: DbPhone[];
+  identifications: DbIdentification[];
+};
+
+type DbEntityFull = DbEntity & {
+  addresses: DbAddress[];
+  phones: DbPhone[];
+  persons: DbPersonFull[];
+};
+
+type DbAccountFull = DbAccount & {
+  entity: DbEntityFull | null;
+  person: DbPersonFull | null;
+};
+
 interface DbAddress {
   address_type: string | null;
   address_line: string | null;
@@ -123,9 +140,9 @@ interface DbIdentification {
 interface DbTransactionParty {
   direction: "from" | "to";
   party_type: "person" | "entity" | "account";
-  person: (DbPerson & { addresses: DbAddress[]; phones: DbPhone[]; identifications: DbIdentification[] }) | null;
+  person: DbPersonFull | null;
   entity: (DbEntity & { addresses: DbAddress[]; phones: DbPhone[] }) | null;
-  account: (DbAccount & { person: DbPerson | null; entity: DbEntity | null }) | null;
+  account: DbAccountFull | null;
 }
 
 interface DbIndicator {
@@ -141,9 +158,9 @@ export interface ReportData {
   reporting_entity: DbReportingEntity;
   case_record: DbCase;
   transactions: (DbTransaction & { parties: DbTransactionParty[] })[];
-  persons: (DbPerson & { addresses: DbAddress[]; phones: DbPhone[]; identifications: DbIdentification[] })[];
+  persons: DbPersonFull[];
   entities: (DbEntity & { addresses: DbAddress[]; phones: DbPhone[] })[];
-  accounts: (DbAccount & { person: DbPerson | null; entity: DbEntity | null })[];
+  accounts: DbAccountFull[];
   indicators: DbIndicator[];
   reason?: string;
 }
@@ -388,9 +405,7 @@ function mapEntity(
   };
 }
 
-function mapAccount(
-  account: DbAccount & { person: DbPerson | null; entity: DbEntity | null }
-): GoAMLAccount {
+function mapAccount(account: DbAccountFull): GoAMLAccount {
   const goamlAccount: GoAMLAccount = {
     institution_name: account.institution_name,
     branch: account.branch ?? "N/A",
@@ -414,6 +429,18 @@ function mapAccount(
   } else {
     // XSD requires institution_code OR swift; use "-" (unknown) as fallback
     goamlAccount.institution_code = "-";
+  }
+
+  if (account.entity) {
+    const goamlEntity = mapEntity(account.entity);
+    if (account.entity.persons.length > 0) {
+      goamlEntity.director_ids = account.entity.persons.map(mapPerson);
+    }
+    goamlAccount.t_entity = goamlEntity;
+  }
+
+  if (account.person) {
+    goamlAccount.signatories = [{ is_primary: true, t_person: mapPerson(account.person) }];
   }
 
   return goamlAccount;

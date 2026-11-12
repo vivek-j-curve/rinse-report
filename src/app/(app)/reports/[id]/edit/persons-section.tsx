@@ -13,6 +13,8 @@ import {
   deleteIdentification,
 } from "@/lib/actions/reports";
 import { CountrySelect } from "@/components/ui/country-select";
+import { CustomSelect } from "@/components/ui/custom-select";
+import { DateInput } from "@/components/ui/date-input";
 
 type PersonRecord = Record<string, unknown> & {
   id: string;
@@ -973,6 +975,8 @@ function Field({
           placeholder={placeholder}
           className={`${inputClass} resize-none`}
         />
+      ) : type === "date" ? (
+        <DateInput value={value} onChange={onChange} small={small} />
       ) : (
         <input
           type={type}
@@ -1006,19 +1010,12 @@ function SelectField({
       >
         {label}
       </label>
-      <select
+      <CustomSelect
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full bg-surface border border-border rounded-lg px-3 py-2 ${
-          small ? "text-[12px]" : "text-[13px]"
-        } focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent`}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={options}
+        small={small}
+      />
     </div>
   );
 }

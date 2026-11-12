@@ -13,6 +13,8 @@ import {
 } from "@/lib/actions/reports";
 import { FundsTypeSelect } from "@/components/ui/funds-type-select";
 import { NZ_INSTITUTIONS, lookupInstitution } from "@/lib/nz-institutions";
+import { CustomSelect } from "@/components/ui/custom-select";
+import { DateInput } from "@/components/ui/date-input";
 
 type AccountRecord = {
   id: string;
@@ -331,13 +333,9 @@ export function TransactionsSection({
               <label className="block text-[12px] font-medium text-text-secondary mb-1">
                 Date *
               </label>
-              <input
-                type="date"
+              <DateInput
                 value={editing.date_transaction}
-                onChange={(e) =>
-                  setEditing({ ...editing, date_transaction: e.target.value })
-                }
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+                onChange={(v) => setEditing({ ...editing, date_transaction: v })}
               />
             </div>
             <div>
@@ -361,20 +359,13 @@ export function TransactionsSection({
               <label className="block text-[12px] font-medium text-text-secondary mb-1">
                 Mode *
               </label>
-              <select
+              <CustomSelect
                 value={editing.transmode_code}
-                onChange={(e) =>
-                  setEditing({ ...editing, transmode_code: e.target.value })
-                }
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-              >
-                <option value="">Select transaction mode...</option>
-                {TRANSMODE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setEditing({ ...editing, transmode_code: v })}
+                options={[{ value: "", label: "Select transaction mode..." }, ...TRANSMODE_OPTIONS]}
+                placeholder="Select transaction mode..."
+                searchable
+              />
             </div>
             <div>
               <label className="block text-[12px] font-medium text-text-secondary mb-1">
@@ -978,18 +969,16 @@ function PartySlot({
       {/* Pick person mode */}
       {mode === "pick-person" && (
         <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
-          <select
+          <CustomSelect
             value={selectedPersonId}
-            onChange={(e) => setSelectedPersonId(e.target.value)}
-            className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            <option value="">Select a person...</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.first_name} {p.last_name} ({p.role.replace(/_/g, " ")})
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedPersonId}
+            options={[
+              { value: "", label: "Select a person..." },
+              ...persons.map((p) => ({ value: p.id, label: `${p.first_name} ${p.last_name} (${p.role.replace(/_/g, " ")})` })),
+            ]}
+            placeholder="Select a person..."
+            small
+          />
           <div className="flex gap-2">
             <button
               onClick={handleLinkPerson}
@@ -1027,15 +1016,12 @@ function PartySlot({
             <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
               Role
             </label>
-            <select
+            <CustomSelect
               value={entityForm.role}
-              onChange={(e) => setEntityForm({ ...entityForm, role: e.target.value as EntityForm["role"] })}
-              className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              {ENTITY_ROLES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
+              onChange={(v) => setEntityForm({ ...entityForm, role: v as EntityForm["role"] })}
+              options={ENTITY_ROLES}
+              small
+            />
           </div>
           <label className="flex items-center gap-2 text-[12px]">
             <input
@@ -1067,18 +1053,16 @@ function PartySlot({
       {/* Pick entity mode */}
       {mode === "pick-entity" && (
         <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
-          <select
+          <CustomSelect
             value={selectedEntityId}
-            onChange={(e) => setSelectedEntityId(e.target.value)}
-            className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            <option value="">Select an entity...</option>
-            {entities.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name}{e.role ? ` (${e.role.replace(/_/g, " ")})` : ""}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedEntityId}
+            options={[
+              { value: "", label: "Select an entity..." },
+              ...entities.map((e) => ({ value: e.id, label: `${e.name}${e.role ? ` (${e.role.replace(/_/g, " ")})` : ""}` })),
+            ]}
+            placeholder="Select an entity..."
+            small
+          />
           <div className="flex gap-2">
             <button
               onClick={handleLinkEntity}
@@ -1105,10 +1089,9 @@ function PartySlot({
               <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
                 Bank / Institution *
               </label>
-              <select
+              <CustomSelect
                 value={accountForm.institution_name}
-                onChange={(e) => {
-                  const name = e.target.value;
+                onChange={(name) => {
                   const inst = lookupInstitution(name);
                   setAccountForm({
                     ...accountForm,
@@ -1117,13 +1100,14 @@ function PartySlot({
                     institution_code: inst?.code ?? (inst ? "" : accountForm.institution_code),
                   });
                 }}
-                className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="">Select institution...</option>
-                {NZ_INSTITUTIONS.map((inst) => (
-                  <option key={inst.name} value={inst.name}>{inst.name}</option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "Select institution..." },
+                  ...NZ_INSTITUTIONS.map((inst) => ({ value: inst.name, label: inst.name })),
+                ]}
+                placeholder="Select institution..."
+                searchable
+                small
+              />
             </div>
             <div>
               <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
@@ -1161,15 +1145,12 @@ function PartySlot({
                       Code Type
                       {autoFilled && <span className="ml-1 text-text-tertiary font-normal">(auto-filled)</span>}
                     </label>
-                    <select
+                    <CustomSelect
                       value={accountForm.institution_code_type}
-                      onChange={(e) => setAccountForm({ ...accountForm, institution_code_type: e.target.value })}
-                      className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-                    >
-                      {INST_CODE_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setAccountForm({ ...accountForm, institution_code_type: v })}
+                      options={INST_CODE_TYPES}
+                      small
+                    />
                   </div>
                   <div>
                     <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
@@ -1223,18 +1204,15 @@ function PartySlot({
                 <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
                   Link Person (optional)
                 </label>
-                <select
+                <CustomSelect
                   value={accountForm.person_id}
-                  onChange={(e) => setAccountForm({ ...accountForm, person_id: e.target.value })}
-                  className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="">None</option>
-                  {persons.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.first_name} {p.last_name} ({p.role.replace(/_/g, " ")})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setAccountForm({ ...accountForm, person_id: v })}
+                  options={[
+                    { value: "", label: "None" },
+                    ...persons.map((p) => ({ value: p.id, label: `${p.first_name} ${p.last_name} (${p.role.replace(/_/g, " ")})` })),
+                  ]}
+                  small
+                />
               </div>
             )}
             {entities.length > 0 && (
@@ -1242,18 +1220,15 @@ function PartySlot({
                 <label className="block text-[11px] font-medium text-text-secondary mb-0.5">
                   Link Entity (optional)
                 </label>
-                <select
+                <CustomSelect
                   value={accountForm.entity_id}
-                  onChange={(e) => setAccountForm({ ...accountForm, entity_id: e.target.value })}
-                  className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="">None</option>
-                  {entities.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}{e.role ? ` (${e.role.replace(/_/g, " ")})` : ""}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setAccountForm({ ...accountForm, entity_id: v })}
+                  options={[
+                    { value: "", label: "None" },
+                    ...entities.map((e) => ({ value: e.id, label: `${e.name}${e.role ? ` (${e.role.replace(/_/g, " ")})` : ""}` })),
+                  ]}
+                  small
+                />
               </div>
             )}
           </div>

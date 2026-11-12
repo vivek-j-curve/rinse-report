@@ -226,6 +226,7 @@ export async function savePerson(
     source_of_wealth?: string;
     is_my_client: boolean;
     is_suspected?: boolean;
+    email?: string;
     role: "my_client" | "counterparty" | "conductor" | "signatory" | "director" | "beneficiary";
     entity_id?: string;
     comments?: string;
@@ -252,6 +253,7 @@ export async function savePerson(
     source_of_wealth: person.source_of_wealth || null,
     is_my_client: person.is_my_client,
     is_suspected: person.is_suspected ?? false,
+    email: person.email || null,
     role: person.role,
     entity_id: person.entity_id || null,
     comments: person.comments || null,
@@ -735,6 +737,7 @@ export async function saveEntity(
     commercial_name?: string;
     is_my_client: boolean;
     is_suspected?: boolean;
+    email?: string;
     role: "my_client" | "counterparty" | "conductor" | "signatory" | "director" | "beneficiary";
     business_type?: string;
     incorporation_date?: string;
@@ -755,6 +758,7 @@ export async function saveEntity(
     commercial_name: entity.commercial_name || null,
     is_my_client: entity.is_my_client,
     is_suspected: entity.is_suspected ?? false,
+    email: entity.email || null,
     role: entity.role,
     business_type: entity.business_type || null,
     incorporation_date: entity.incorporation_date || null,

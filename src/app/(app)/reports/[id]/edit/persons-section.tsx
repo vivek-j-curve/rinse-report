@@ -88,6 +88,7 @@ type PersonForm = {
   source_of_wealth: string;
   is_my_client: boolean;
   is_suspected: boolean;
+  email: string;
   role: string;
   entity_id: string;
   comments: string;
@@ -108,6 +109,7 @@ const EMPTY_PERSON: PersonForm = {
   source_of_wealth: "",
   is_my_client: true,
   is_suspected: false,
+  email: "",
   role: "my_client",
   entity_id: "",
   comments: "",
@@ -169,6 +171,7 @@ export function PersonsSection({
       source_of_wealth: p.source_of_wealth ?? "",
       is_my_client: p.is_my_client,
       is_suspected: (p as any).is_suspected ?? false,
+      email: (p as any).email ?? "",
       role: p.role,
       entity_id: p.entity_id ?? "",
       comments: p.comments ?? "",
@@ -191,6 +194,7 @@ export function PersonsSection({
       role: editingPerson.role as PersonForm["role"],
       entity_id: editingPerson.entity_id || undefined,
       is_suspected: editingPerson.is_suspected,
+      email: editingPerson.email || undefined,
     } as Parameters<typeof savePerson>[1]);
     setSaving(false);
 
@@ -361,6 +365,15 @@ export function PersonsSection({
               onChange={(v) =>
                 setEditingPerson({ ...editingPerson, mothers_name: v })
               }
+            />
+            <Field
+              label="Email (optional)"
+              value={editingPerson.email}
+              onChange={(v) =>
+                setEditingPerson({ ...editingPerson, email: v })
+              }
+              placeholder="email@example.com"
+              type="email"
             />
           </div>
           <div className="mt-3">

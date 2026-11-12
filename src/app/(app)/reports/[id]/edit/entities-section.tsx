@@ -50,6 +50,7 @@ type EntityForm = {
   commercial_name: string;
   is_my_client: boolean;
   is_suspected: boolean;
+  email: string;
   role: string;
   business_type: string;
   incorporation_date: string;
@@ -64,6 +65,7 @@ const EMPTY_ENTITY: EntityForm = {
   commercial_name: "",
   is_my_client: false,
   is_suspected: false,
+  email: "",
   role: "counterparty",
   business_type: "",
   incorporation_date: "",
@@ -106,6 +108,10 @@ export function EntitiesSection({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const editingEntityRecord = editingEntity?.id
+    ? typedEntities.find((e) => e.id === editingEntity.id) ?? null
+    : null;
+
   function startNew() {
     setEditingEntity({ ...EMPTY_ENTITY });
     setExpandedId(null);
@@ -118,6 +124,7 @@ export function EntitiesSection({
       commercial_name: e.commercial_name ?? "",
       is_my_client: e.is_my_client,
       is_suspected: (e as any).is_suspected ?? false,
+      email: (e as any).email ?? "",
       role: e.role,
       business_type: e.business_type ?? "",
       incorporation_date: e.incorporation_date ?? "",
@@ -145,6 +152,7 @@ export function EntitiesSection({
         | undefined,
       role: editingEntity.role as EntityForm["role"],
       is_suspected: editingEntity.is_suspected,
+      email: editingEntity.email || undefined,
     } as Parameters<typeof saveEntity>[1]);
     setSaving(false);
 
@@ -152,9 +160,8 @@ export function EntitiesSection({
       setError(res.error);
       return;
     }
-    const savedId = "id" in res ? res.id : editingEntity.id;
-    setEditingEntity(null);
-    if (savedId) setExpandedId(savedId);
+    const returnedId = "id" in res ? res.id : editingEntity.id;
+    setEditingEntity((prev) => (prev ? { ...prev, id: returnedId } : null));
     onUpdate();
   }
 
@@ -259,6 +266,13 @@ export function EntitiesSection({
                 placeholder="Search country..."
               />
             </div>
+            <Field
+              label="Email (optional)"
+              value={editingEntity.email}
+              onChange={(v) => setEditingEntity({ ...editingEntity, email: v })}
+              placeholder="contact@company.com"
+              type="email"
+            />
           </div>
           <div className="mt-3">
             <Field
@@ -302,9 +316,32 @@ export function EntitiesSection({
               }}
               className="px-4 py-2 text-[13px] font-medium border border-border rounded-full hover:bg-surface-alt transition-colors"
             >
-              Cancel
+              {editingEntity.id ? "Done" : "Cancel"}
             </button>
           </div>
+
+          {editingEntity.id && (
+            <div className="border-t border-border mt-6 pt-5 space-y-5">
+              <p className="text-[11.5px] text-text-tertiary -mb-1">
+                Save details above first, then add address and phone below.
+              </p>
+              <EntitySubRecords
+                title="Addresses"
+                items={editingEntityRecord?.addresses ?? []}
+                entityId={editingEntity.id}
+                type="address"
+                defaultOpen={(editingEntityRecord?.addresses ?? []).length === 0}
+                onUpdate={onUpdate}
+              />
+              <EntitySubRecords
+                title="Phone Numbers"
+                items={editingEntityRecord?.phones ?? []}
+                entityId={editingEntity.id}
+                type="phone"
+                onUpdate={onUpdate}
+              />
+            </div>
+          )}
         </div>
         );
       })()}
